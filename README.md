@@ -2,8 +2,8 @@
 
 - [Informationen zum Projekt](https://github.com/mi-classroom/mi-web-technologien-beiboot-ss2026-cosimazink/blob/main/PROJECT.md)
 
-**Architecture Decision Records:**
-[001 ML-Library Choice](https://github.com/mi-classroom/mi-web-technologien-beiboot-ss2026-cosimazink/blob/main/adr/001-ml-library-choice.md)
+## Architecture Decision Records:
+[001 ML-Library Choice](https://github.com/mi-classroom/mi-web-technologien-beiboot-ss2026-cosimazink/blob/main/adr/001-ml-library-choice.md) <br>
 
 ## Lokal starten
 
