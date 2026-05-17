@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Issue 01: Gesture Recognition</title>
+  <link rel="stylesheet" href="styles/combined.css" />
+</head>
+<body class="demo-layout">
+
+  <h1>Issue 01 &mdash; MediaPipe Live Hand Landmarks</h1>
+  <div id="status">Lade Modell…</div>
+
+  <div id="camera-wrapper">
+    <video id="video" autoplay playsinline muted></video>
+    <canvas id="canvas"></canvas>
+  </div>
+
+  <div id="raw-data">
+    <div class="hand-panel">
+      <h2>Linke Hand</h2>
+      <div id="no-hand-left" class="no-hand">–</div>
+      <div class="gesture-label" id="gesture-left"></div>
+      <div class="landmark-list" id="landmarks-left"></div>
+    </div>
+    <div class="hand-panel">
+      <h2>Rechte Hand</h2>
+      <div id="no-hand-right" class="no-hand">–</div>
+      <div class="gesture-label" id="gesture-right"></div>
+      <div class="landmark-list" id="landmarks-right"></div>
+    </div>
+  </div>
+
+  <div id="perf">fps: – &nbsp;|&nbsp; inference: –</div>
+
+  <script type="module" src="scripts/gesture-recognition.js"></script>
+</body>
+</html>
