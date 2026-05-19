@@ -1,0 +1,101 @@
+.demo-layout {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--xl);
+  gap: var(--l);
+}
+
+#status {
+  font-size: var(--text-m);
+  color: var(--orange);
+}
+
+/* Camera + Canvas overlay */
+
+#camera-wrapper {
+  position: relative;
+  width: 640px;
+  height: 480px;
+}
+
+#video {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scaleX(-1);
+}
+
+#canvas {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  transform: scaleX(-1);
+}
+
+/* Raw data panels */
+
+#raw-data {
+  width: 640px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--m);
+}
+
+.hand-panel {
+  background: var(--white);
+  border: 1px solid var(--grey-light);
+  padding: var(--m);
+  overflow-x: auto;
+}
+
+.hand-panel h2 {
+  margin-bottom: var(--s);
+  border-bottom: 1px solid var(--grey-light);
+  padding-bottom: var(--xs);
+}
+
+.gesture-label {
+  font-size: var(--text-xl);
+  color: var(--grey-darkest);
+  margin-bottom: var(--s);
+}
+
+.no-hand {
+  color: var(--grey-light);
+  font-size: var(--text-m);
+}
+
+/* Landmark coordinate list */
+
+.landmark-list {
+  font-size: var(--text-xs);
+  color: var(--grey-mid);
+  line-height: 1.8;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.landmark-list .name {
+  color: var(--grey-dark);
+  width: 120px;
+  display: inline-block;
+}
+
+.landmark-list .coords {
+  color: #0077aa;
+}
+
+.landmark-list .world-coords {
+  color: var(--grey-mid);
+}
+
+/* Performance readout */
+
+#perf {
+  font-size: var(--text-s);
+  color: var(--grey-mid);
+  align-self: flex-start;
+  width: 640px;
+}
