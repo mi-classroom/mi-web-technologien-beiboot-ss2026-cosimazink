@@ -1,58 +1,17 @@
 import {
   GestureRecognizer,
+  PoseLandmarker,
   FilesetResolver,
   DrawingUtils,
 } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/vision_bundle.mjs";
 
-// One Euro Filter: Smooths noisy 1-D signals
-class OneEuroFilter {
-  constructor(minCutoff = 1.0, beta = 0.05, dCutoff = 1.0) {
-    this._minCutoff = minCutoff;
-    this._beta      = beta;
-    this._dCutoff   = dCutoff;
-    this._x         = null;
-    this._dx        = 0;
-    this._lastT     = null;
-  }
+import { isNearMode, getPinchResult }           from "./gestures/pinch-swipe.js";
+import { getShoulderTapResult, resetShoulderTap } from "./gestures/shoulder-tap.js";
+import { getHandsToHeadResult, resetHandsToHead } from "./gestures/hands-to-head.js";
+import { getHandsToHipsResult, resetHandsToHips } from "./gestures/hands-to-hips.js";
 
-  _alpha(freq, cutoff) {
-    const te  = 1 / freq;
-    const tau = 1 / (2 * Math.PI * cutoff);
-    return 1 / (1 + tau / te);
-  }
-
-  filter(x, timestamp) {
-    if (this._lastT === null) {
-      this._lastT = timestamp;
-      this._x     = x;
-      return x;
-    }
-    const dt   = Math.max((timestamp - this._lastT) / 1000, 1e-6);
-    const freq = 1 / dt;
-    this._lastT = timestamp;
-
-    const dx = (x - this._x) * freq;
-    this._dx += this._alpha(freq, this._dCutoff) * (dx - this._dx);
-
-    const cutoff = this._minCutoff + this._beta * Math.abs(this._dx);
-    this._x += this._alpha(freq, cutoff) * (x - this._x);
-    return this._x;
-  }
-}
-
-const MIN_CUTOFF         = 1.0;   // Hz – One Euro Filter
-const BETA               = 0.05;  // One Euro Filter speed coefficient
-
-const COOLDOWN_MS        = 700;   // min interval between two navigation actions
-const CONFIDENCE_MIN     = 0.7;   // handedness score below this → skip hand
-
-const PINCH_THRESHOLD    = 0.08;  // max thumb–index distance to count as pinch
-const PINCH_HOLD_MS      = 500;   // hold pinch this long before movement is tracked
-
-// Direction detection
-const AXIS_LOCK_THRESHOLD = 0.04; // accumulated movement at which the axis is locked
-const AXIS_RATIO          = 2.5;  // dominant axis must be this much larger to lock
-const PINCH_MOVE_DELTA    = 0.13; // accumulated movement on the locked axis to trigger
+const COOLDOWN_MS = 700;
+const ACTIONS     = new Set(["right", "left", "up", "down"]);
 
 const video      = document.getElementById("gc-video");
 const canvas     = document.getElementById("gc-canvas");
@@ -60,28 +19,10 @@ const ctx        = canvas.getContext("2d");
 const statusEl   = document.getElementById("gc-status");
 const feedbackEl = document.getElementById("gc-feedback");
 
-let recognizer    = null;
-let lastVideoTime = -1;
-let lastActionTs  = 0;
-
-// Per-hand pinch state machine
-const makePinchState = () => ({
-  phase:      "idle",   // "idle" | "arming" | "armed"
-  armedAt:    null,
-  prevX:      null,
-  prevY:      null,
-  accumX:     0,
-  accumY:     0,
-  lockedAxis: null,     // "h" (horizontal) | "v" (vertical) | null
-});
-const pinchState = { Left: makePinchState(), Right: makePinchState() };
-
-// One Euro Filters for the pinch midpoint, one per axis per hand
-const makeHandFilters = () => ({
-  pinchX: new OneEuroFilter(MIN_CUTOFF, BETA),
-  pinchY: new OneEuroFilter(MIN_CUTOFF, BETA),
-});
-const hf = { Left: makeHandFilters(), Right: makeHandFilters() };
+let recognizer     = null;
+let poseRecognizer = null;
+let lastVideoTime  = -1;
+let lastActionTs   = 0;
 
 async function init() {
   setStatus("Lade Modell…");
@@ -89,15 +30,27 @@ async function init() {
   const vision = await FilesetResolver.forVisionTasks(
     "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm"
   );
-  recognizer = await GestureRecognizer.createFromOptions(vision, {
-    baseOptions: {
-      modelAssetPath:
-        "https://storage.googleapis.com/mediapipe-models/gesture_recognizer/gesture_recognizer/float16/1/gesture_recognizer.task",
-      delegate: "GPU",
-    },
-    runningMode: "VIDEO",
-    numHands: 2,
-  });
+
+  [recognizer, poseRecognizer] = await Promise.all([
+    GestureRecognizer.createFromOptions(vision, {
+      baseOptions: {
+        modelAssetPath:
+          "https://storage.googleapis.com/mediapipe-models/gesture_recognizer/gesture_recognizer/float16/1/gesture_recognizer.task",
+        delegate: "GPU",
+      },
+      runningMode: "VIDEO",
+      numHands: 2,
+    }),
+    PoseLandmarker.createFromOptions(vision, {
+      baseOptions: {
+        modelAssetPath:
+          "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task",
+        delegate: "GPU",
+      },
+      runningMode: "VIDEO",
+      numPoses: 1,
+    }),
+  ]);
 
   setStatus("Kamera…");
   await startCamera();
@@ -123,17 +76,53 @@ function loop() {
   if (now === lastVideoTime) { requestAnimationFrame(loop); return; }
   lastVideoTime = now;
 
-  const ts      = Date.now();
-  const results = recognizer.recognizeForVideo(video, ts);
+  const ts          = performance.now();
+  const handResults = recognizer.recognizeForVideo(video, ts);
 
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  drawLandmarks(results);
-  processGestures(results, ts);
+  drawHandLandmarks(handResults);
 
+  let poseResults = null;
+  try {
+    poseResults = poseRecognizer.detectForVideo(video, ts);
+    drawPoseLandmarks(poseResults);
+  } catch (e) {
+    console.warn("Pose:", e);
+  }
+
+  const nearMode = isNearMode(handResults);
+  let result     = null;
+
+  if (nearMode) {
+    // Reset all body pose states when switching to near mode
+    resetShoulderTap();
+    resetHandsToHead();
+    resetHandsToHips();
+    result = getPinchResult(handResults, ts);
+  } else if (poseResults?.landmarks?.length) {
+    const lm = poseResults.landmarks[0];
+    const r1 = getShoulderTapResult(lm, ts);
+    const r2 = getHandsToHeadResult(lm, ts);
+    const r3 = getHandsToHipsResult(lm, ts);
+
+    // Actions take priority; fall back to the most advanced pending state
+    result = ACTIONS.has(r1) ? r1
+           : ACTIONS.has(r2) ? r2
+           : ACTIONS.has(r3) ? r3
+           : r1 || r2 || r3;
+  } else {
+    resetShoulderTap();
+    resetHandsToHead();
+    resetHandsToHips();
+  }
+
+  handleResult(result, ts);
   requestAnimationFrame(loop);
 }
 
-function drawLandmarks(results) {
+// ── Drawing ───────────────────────────────────────────────────────────────────
+
+function drawHandLandmarks(results) {
   const drawing = new DrawingUtils(ctx);
   for (let i = 0; i < results.landmarks.length; i++) {
     const lm         = results.landmarks[i];
@@ -153,122 +142,42 @@ function drawLandmarks(results) {
   }
 }
 
-// Gesture processing 
-function processGestures(results, ts) {
-  const hands = { Left: null, Right: null };
-  for (let i = 0; i < results.landmarks.length; i++) {
-    const score = results.handednesses[i]?.[0]?.score ?? 0;
-    if (score < CONFIDENCE_MIN) continue;
-    const handedness = results.handednesses[i][0].displayName;
-    const label      = handedness === "Left" ? "Right" : "Left";
-    hands[label]     = results.landmarks[i];
-  }
+const VISIBILITY_MIN_DRAW = 0.5;
 
-  const result = detectGesture(hands, ts);
-  handleResult(result, ts);
+function drawPoseLandmarks(poseResults) {
+  if (!poseResults?.landmarks?.length) return;
+  const drawing = new DrawingUtils(ctx);
+  const lm      = poseResults.landmarks[0];
+
+  drawing.drawConnectors(lm, PoseLandmarker.POSE_CONNECTIONS, {
+    color: "rgba(255,255,255,0.25)",
+    lineWidth: 1,
+  });
+  drawing.drawLandmarks(lm, {
+    color: "rgba(255,255,255,0.6)",
+    fillColor: "rgba(255,255,255,0.2)",
+    lineWidth: 1,
+    radius: 2,
+  });
+
+  // Shoulders (11, 12) and wrists (15, 16) highlighted in yellow
+  for (const i of [11, 12, 15, 16]) {
+    if (!lm[i] || (lm[i].visibility ?? 0) < VISIBILITY_MIN_DRAW) continue;
+    drawing.drawLandmarks([lm[i]], {
+      color: "#fff",
+      fillColor: "#ffcc00",
+      lineWidth: 1,
+      radius: 5,
+    });
+  }
 }
 
-// return first action found, or the most advanced pending state
-function detectGesture(hands, ts) {
-  let status = null;
+// ── Result handling ───────────────────────────────────────────────────────────
 
-  for (const label of ["Left", "Right"]) {
-    if (!hands[label]) { resetPinch(label); continue; }
-
-    const r = detectPinch(hands[label], hf[label], ts, label);
-
-    if (r === "right" || r === "left" || r === "up" || r === "down") return r;
-    if (r === "armed" || (r === "arming" && status !== "armed")) status = r;
-  }
-
-  return status;
-}
-
-// Pinch state machine
-function detectPinch(lm, f, ts, label) {
-  const isPinching = dist2D(lm[4], lm[8]) < PINCH_THRESHOLD;
-  const st         = pinchState[label];
-
-  if (!isPinching) { resetPinch(label); return null; }
-
-  const px = f.pinchX.filter((lm[4].x + lm[8].x) / 2, ts);
-  const py = f.pinchY.filter((lm[4].y + lm[8].y) / 2, ts);
-
-  // Arming
-  if (st.phase === "idle") {
-    st.phase   = "arming";
-    st.armedAt = ts;
-    st.prevX   = px;
-    st.prevY   = py;
-    return "arming";
-  }
-
-  if (st.phase === "arming") {
-    st.prevX = px; 
-    st.prevY = py;
-    if (ts - st.armedAt < PINCH_HOLD_MS) return "arming";
-    st.phase  = "armed";
-    st.accumX = 0;
-    st.accumY = 0;
-    return "armed";
-  }
-
-  // Armed
-  st.accumX += px - st.prevX;
-  st.accumY += py - st.prevY;
-  st.prevX   = px;
-  st.prevY   = py;
-
-  const ax = Math.abs(st.accumX);
-  const ay = Math.abs(st.accumY);
-
-  // Try to lock axis if not yet locked
-  if (!st.lockedAxis) {
-    if (ax >= AXIS_LOCK_THRESHOLD && ax >= ay * AXIS_RATIO) st.lockedAxis = "h";
-    else if (ay >= AXIS_LOCK_THRESHOLD && ay >= ax * AXIS_RATIO) st.lockedAxis = "v";
-  }
-
-  // Only the locked axis can trigger; ignore the other axis entirely
-  if (st.lockedAxis === "h" && ax >= PINCH_MOVE_DELTA) {
-    const dir     = st.accumX < 0 ? "right" : "left";
-    st.accumX     = 0;
-    st.accumY     = 0;
-    st.lockedAxis = null; // reset so next movement can pick a new direction
-    return dir;
-  }
-
-  if (st.lockedAxis === "v" && ay >= PINCH_MOVE_DELTA) {
-    const dir     = st.accumY > 0 ? "down" : "up";
-    st.accumX     = 0;
-    st.accumY     = 0;
-    st.lockedAxis = null;
-    return dir;
-  }
-
-  return "armed";
-}
-
-function resetPinch(label) {
-  const st      = pinchState[label];
-  st.phase      = "idle";
-  st.armedAt    = null;
-  st.prevX      = null;
-  st.prevY      = null;
-  st.accumX     = 0;
-  st.accumY     = 0;
-  st.lockedAxis = null;
-}
-
-// 2D distance between two landmarks
-function dist2D(a, b) {
-  return Math.hypot(a.x - b.x, a.y - b.y);
-}
-
-// Result handling
 function handleResult(result, ts) {
   if (!result) { showFeedback(""); return; }
 
-  const pending = { arming: "○", armed: "●" };
+  const pending = { arming: "○", armed: "●", holding: "○" };
   if (result in pending) { showFeedback(pending[result]); return; }
 
   if (ts - lastActionTs >= COOLDOWN_MS) {
@@ -283,7 +192,8 @@ function handleResult(result, ts) {
   }
 }
 
-// UI helpers
+// ── UI helpers ────────────────────────────────────────────────────────────────
+
 let feedbackTimer = null;
 
 function showFeedback(text, clearAfterMs = 0) {
