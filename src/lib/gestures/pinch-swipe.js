@@ -20,6 +20,8 @@ import { BaseGesture }    from "../gesture-base.js";
 import { OneEuroFilter }  from "../utils/one-euro-filter.js";
 import { dist2D }         from "../utils/utils.js";
 
+const SWIPE_ACTIONS = new Set(["right", "left", "up", "down"]);
+
 const DEFAULTS = {
   minCutoff:         1.0,
   beta:              0.05,
@@ -63,14 +65,13 @@ export class PinchSwipeGesture extends BaseGesture {
       hands[label] = lm;
     }
 
-    const ACTIONS = new Set(["right", "left", "up", "down"]);
     let pending = null;
 
     for (const label of ["Left", "Right"]) {
       if (!hands[label]) { this._resetPinch(label); continue; }
       const r = this._detectPinch(hands[label], this._filters[label], ts, label);
       if (r === null) continue;
-      if (ACTIONS.has(r)) return { action: r };
+      if (SWIPE_ACTIONS.has(r)) return { action: r };
       if (r === "armed" || (r === "arming" && pending !== "armed")) pending = r;
     }
 
@@ -118,7 +119,10 @@ export class PinchSwipeGesture extends BaseGesture {
 
   _detectPinch(lm, f, ts, label) {
     const { pinchThreshold, pinchHoldMs, axisLockThreshold, axisRatio, pinchMoveDelta } = this._cfg;
-    const isPinching = dist2D(lm[4], lm[8]) < pinchThreshold;
+    // Index finger must be at least partially extended (PIP above MCP) to
+    // distinguish a real pinch from a closed fist where tips accidentally meet.
+    const indexExtended = lm[6].y < lm[5].y;
+    const isPinching = indexExtended && dist2D(lm[4], lm[8]) < pinchThreshold;
     const st         = this._pinchState[label];
 
     if (!isPinching) { this._resetPinch(label); return null; }

@@ -11,6 +11,19 @@ export function dist2D(a, b) {
 }
 
 /**
+ * Returns true when a finger tip is higher on screen than its PIP joint
+ * (smaller y value), indicating the finger is extended rather than curled.
+ *
+ * @param {Array<{x:number,y:number}>} lm  - hand landmark array
+ * @param {number} tipIdx  - landmark index of the fingertip
+ * @param {number} pipIdx  - landmark index of the PIP joint
+ * @returns {boolean}
+ */
+export function fingerExtended(lm, tipIdx, pipIdx) {
+  return lm[tipIdx].y < lm[pipIdx].y;
+}
+
+/**
  * Generic hold-state machine used by all body-pose gestures.
  *
  * @param {{ phase: string, startTs: number|null }} st  - mutable state object

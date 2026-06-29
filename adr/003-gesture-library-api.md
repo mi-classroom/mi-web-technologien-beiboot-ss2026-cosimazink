@@ -120,6 +120,8 @@ document.addEventListener("pinch-right", handler);
 | `ShoulderTapGesture` | `"shoulder-tap"` | `"pose"` | `"right"` `"left"` | `"holding"` |
 | `HandsToHeadGesture` | `"hands-to-head"` | `"pose"` | `"up"` | `"holding"` |
 | `HandsToHipsGesture` | `"hands-to-hips"` | `"pose"` | `"down"` | `"holding"` |
+| `PinkyPointerGesture` | `"pinky-pointer"` | `"hands"` | — | `"pointing"` + `{x, y}` |
+| `PinkyClickGesture` | `"pinky-click"` | `"hands"` | `"click"` + `{x, y}` | — |
 
 ## Links
 
