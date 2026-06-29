@@ -15,7 +15,8 @@ npx serve src
 ```
 
 → [http://localhost:3000](http://localhost:3000) – Landmark-Demo  
-→ [http://localhost:3000/presentation.html](http://localhost:3000/presentation.html) – Präsentation mit Gestensteuerung
+→ [http://localhost:3000/presentation.html](http://localhost:3000/presentation.html) – Präsentation mit Gestensteuerung  
+→ [http://localhost:3000/lib-test.html](http://localhost:3000/lib-test.html) – Gesture Library Testseite
 
 > Kein Build-Schritt nötig. Die Anwendung läuft vollständig im Browser via MediaPipe Web SDK.
 
@@ -37,8 +38,11 @@ import {
   ShoulderTapGesture,
   HandsToHeadGesture,
   HandsToHipsGesture,
-  BaseGesture,  // nur nötig wenn du eigene Gesten schreibst
-  dist2D,       // optional – Hilfsfunktion für eigene Gesten
+  PinkyPointerGesture,
+  PinkyClickGesture,
+  BaseGesture,      // nur nötig wenn du eigene Gesten schreibst
+  dist2D,           // optional – Hilfsfunktion für eigene Gesten
+  fingerExtended,   // optional – Hilfsfunktion für eigene Gesten
 } from "./lib/index.js";
 ```
 
@@ -53,14 +57,18 @@ lib
   .register(new PinchSwipeGesture())
   .register(new ShoulderTapGesture())
   .register(new HandsToHeadGesture())
-  .register(new HandsToHipsGesture());
+  .register(new HandsToHipsGesture())
+  .register(new PinkyPointerGesture())
+  .register(new PinkyClickGesture({ cooldownMs: 2000 }));
 
 // 3. Auf Gesten reagieren
-lib.on("pinch-swipe:right",   () => console.log("→ rechts"));
-lib.on("pinch-swipe:left",    () => console.log("← links"));
-lib.on("shoulder-tap:right",  () => console.log("→ Schulter-Tap"));
-lib.on("hands-to-head:up",    () => console.log("↑ Hände zum Kopf"));
-lib.on("hands-to-hips:down",  () => console.log("↓ Hände zur Hüfte"));
+lib.on("pinch-swipe:right",  () => console.log("→ rechts"));
+lib.on("pinch-swipe:left",   () => console.log("← links"));
+lib.on("shoulder-tap:right", () => console.log("→ Schulter-Tap"));
+lib.on("hands-to-head:up",   () => console.log("↑ Hände zum Kopf"));
+lib.on("hands-to-hips:down", () => console.log("↓ Hände zur Hüfte"));
+lib.on("pinky-pointer",      ({ x, y }) => moveCursor(x, y));
+lib.on("pinky-click",        ({ x, y }) => triggerClick(x, y));
 
 // 4. Einmal pro Frame aufrufen (innerhalb der requestAnimationFrame-Loop)
 lib.detect({ handResults, poseResults }, performance.now());
@@ -103,6 +111,10 @@ lib.on("pinch-swipe", ({ action, state }) => {
 | `ShoulderTapGesture` | `"shoulder-tap"` | Körper fern | `right` `left` | `holding` |
 | `HandsToHeadGesture` | `"hands-to-head"` | Körper fern | `up` | `holding` |
 | `HandsToHipsGesture` | `"hands-to-hips"` | Körper fern | `down` | `holding` |
+| `PinkyPointerGesture` | `"pinky-pointer"` | Hand nah | — | `pointing` |
+| `PinkyClickGesture` | `"pinky-click"` | Hand nah | `click` | — |
+
+`PinkyPointerGesture` und `PinkyClickGesture` geben bei `pointing`/`click` zusätzlich `{ x, y }` mit (normalisierte Bildschirmkoordinaten, bereits zone-remappt).
 
 #### Konfiguration
 
@@ -116,19 +128,27 @@ new PinchSwipeGesture({
   minScale:       0.10,  // Minimale Handgröße (0 = kein Abstandsgate)
 });
 
-new ShoulderTapGesture({
-  holdMs:          700,  // Haltezeit vor dem Auslösen (ms)
-  shoulderTapDist: 0.12, // Max. Abstand Handgelenk–Schulter
-});
-
+new ShoulderTapGesture({ holdMs: 700, shoulderTapDist: 0.12 });
 new HandsToHeadGesture({ holdMs: 700, headDist: 0.25 });
 new HandsToHipsGesture({ holdMs: 700, hipDist:  0.20 });
+
+new PinkyPointerGesture({
+  zoneX: [0.15, 0.85],  // Aktive Kamerazone horizontal (kleiner = leichter zu erreichen)
+  zoneY: [0.10, 0.90],  // Aktive Kamerazone vertikal
+});
+
+new PinkyClickGesture({
+  cooldownMs:     2000,  // Mindestabstand zwischen zwei Klicks (ms)
+  thumbExtendMin: 0.10,  // Mindestabstand Daumenspitze–Zeigefingergrundgelenk
+  zoneX: [0.15, 0.85],
+  zoneY: [0.10, 0.90],
+});
 ```
 
 ### Eigene Geste schreiben
 
 ```js
-import { BaseGesture } from "./lib/gesture-base.js";
+import { BaseGesture } from "./lib/index.js";
 
 export class MyGesture extends BaseGesture {
   // Pflicht: eindeutiger Name → wird als Event-Prefix genutzt
@@ -138,8 +158,6 @@ export class MyGesture extends BaseGesture {
   get requiredInput() { return "hands"; }
 
   detect(input, timestamp) {
-    // Landmark-Daten auswerten …
-
     // Nichts erkannt:
     return null;
 
@@ -165,6 +183,7 @@ lib.on("my-gesture:my-action", () => { /* ... */ });
 ```
 src/
   lib/                          Gesture Library (keine App-Abhängigkeiten)
+    index.js                    Einziger öffentlicher Einstiegspunkt
     gesture-library.js          GestureLibrary – Hauptklasse
     gesture-base.js             BaseGesture – Interface für eigene Gesten
     gestures/
@@ -172,11 +191,14 @@ src/
       shoulder-tap.js           Kreuzgriff zur Schulter (Körper, Fernbereich)
       hands-to-head.js          Hände zum Kopf (Körper, Fernbereich)
       hands-to-hips.js          Hände zur Hüfte (Körper, Fernbereich)
+      pinky-pointer.js          Kleinfinger → Cursor bewegen (Hand, Nahbereich)
+      pinky-click.js            Kleinfinger + Daumen → Klick (Hand, Nahbereich)
     utils/
       one-euro-filter.js        Signalglättung (intern)
-      utils.js                  dist2D, processHoldState (intern)
+      utils.js                  dist2D, fingerExtended, processHoldState (intern)
+  lib-test.html                 Interaktive Testseite für die Library
   scripts/                      Demo-Anwendungen
     gesture-control.js          Gestensteuerung für presentation.html
     gesture-recognition.js      Landmark-Visualisierung für index.html
-    gestures/                   Prototyp-Module aus Issue #2 (werden durch lib/ abgelöst)
+    gestures/                   Prototyp-Module aus Issue #2
 ```
