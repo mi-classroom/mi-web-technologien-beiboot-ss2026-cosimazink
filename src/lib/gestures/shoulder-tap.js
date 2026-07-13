@@ -1,19 +1,7 @@
-/**
- * ShoulderTapGesture — far-mode body-pose gesture.
- *
- * Cross-shoulder tap: hold one wrist near the opposite shoulder for 700 ms.
- * Left wrist → right shoulder fires "right".
- * Right wrist → left shoulder fires "left".
- *
- * Actions: "right" | "left"
- * States:  "holding"
- *
- * @example
- * lib.register(new ShoulderTapGesture());
- * lib.on("shoulder-tap:right", () => Reveal.right());
- */
+// Cross-shoulder tap: hold wrist near opposite shoulder for 700 ms.
+// Left wrist → right shoulder → "right"; right wrist → left shoulder → "left"
 
-import { BaseGesture }           from "../gesture-base.js";
+import { BaseGesture }              from "../gesture-base.js";
 import { dist2D, processHoldState } from "../utils/utils.js";
 
 const DEFAULTS = {
@@ -57,7 +45,7 @@ export class ShoulderTapGesture extends BaseGesture {
   }
 
   reset() {
-    this._state.leftOnRight  = { phase: "idle", startTs: null };
-    this._state.rightOnLeft  = { phase: "idle", startTs: null };
+    this._state.leftOnRight = { phase: "idle", startTs: null };
+    this._state.rightOnLeft = { phase: "idle", startTs: null };
   }
 }
