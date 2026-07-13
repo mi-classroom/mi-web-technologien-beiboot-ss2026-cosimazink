@@ -99,3 +99,12 @@
   align-self: flex-start;
   width: 640px;
 }
+
+/* Detected gesture display — between camera and hand panels */
+
+#gesture-display {
+  width: 640px;
+  font-size: var(--text-xl);
+  color: var(--orange);
+  text-align: center;
+}
