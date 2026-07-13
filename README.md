@@ -7,6 +7,7 @@
 - [ADR 001 – ML-Library Choice](./adr/001-ml-library-choice.md)
 - [ADR 002 – Gesture Heuristics & Algorithm Parameters](./adr/002-gesture-heuristics.md)
 - [ADR 003 – Gesture Library API Design](./adr/003-gesture-library-api.md)
+- [ADR 004 – Gesture Library API Design](./adr/004-gesture-demo.md)
 
 ## Lokal starten
 
@@ -15,7 +16,7 @@ npx serve src
 ```
 
 → [http://localhost:3000](http://localhost:3000) – Landmark-Demo  
-→ [http://localhost:3000/presentation.html](http://localhost:3000/presentation.html) – Präsentation mit Gestensteuerung  
+→ [http://localhost:3000/lib-test.html](http://localhost:3000/lib-test.html) – Demo der API
 → [http://localhost:3000/lib-test.html](http://localhost:3000/lib-test.html) – Gesture Library Testseite
 
 > Kein Build-Schritt nötig. Die Anwendung läuft vollständig im Browser via MediaPipe Web SDK.
@@ -64,6 +65,8 @@ lib
 // 3. Auf Gesten reagieren
 lib.on("pinch-swipe:right",  () => console.log("→ rechts"));
 lib.on("pinch-swipe:left",   () => console.log("← links"));
+lib.on("pinch-swipe:up",  () => console.log("↑ hoch"));
+lib.on("pinch-swipe:down",   () => console.log("↓ runter"));
 lib.on("shoulder-tap:right", () => console.log("→ Schulter-Tap"));
 lib.on("hands-to-head:up",   () => console.log("↑ Hände zum Kopf"));
 lib.on("hands-to-hips:down", () => console.log("↓ Hände zur Hüfte"));
