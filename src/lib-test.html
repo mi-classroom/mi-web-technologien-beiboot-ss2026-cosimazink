@@ -2,277 +2,204 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8" />
-  <title>Gesture Library – Test</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GestureShop</title>
   <style>
-    body { font-family: monospace; background: #111; color: #eee; padding: 2rem; }
-    h1   { font-size: 1rem; color: #888; margin-bottom: 1rem; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-    #main {
-      display: flex;
-      gap: 1.5rem;
-      align-items: flex-start;
+    body {
+      font-family: system-ui, sans-serif;
+      background: #f5f5f5;
+      color: #111;
     }
 
-    #camera-wrapper { position: relative; width: 640px; height: 480px; flex-shrink: 0; }
-    video, canvas   { position: absolute; width: 100%; height: 100%; transform: scaleX(-1); }
+    header {
+      background: #fff;
+      border-bottom: 1px solid #e5e5e5;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 2rem;
+      height: 52px;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+    .logo { font-size: 1rem; font-weight: 700; color: #f90; }
+    .nav-hint { font-size: 0.7rem; color: #aaa; font-family: monospace; }
+    .nav-hint span { color: #f90; }
 
-    #sidebar {
+    .product-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+      padding: 1.5rem 2rem;
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    .product-card {
+      background: #fff;
+      border: 1px solid #e5e5e5;
+      border-radius: 6px;
+      text-decoration: none;
+      color: inherit;
       display: flex;
       flex-direction: column;
-      gap: 1rem;
-      padding-top: 0.25rem;
+      overflow: hidden;
+      transition: box-shadow 0.15s;
+    }
+    .product-card:hover { box-shadow: 0 2px 12px rgba(0,0,0,0.08); }
+
+    .product-thumb {
+      aspect-ratio: 4/3;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 3rem;
+      background: #fafafa;
+      border-bottom: 1px solid #f0f0f0;
     }
 
-    .target-btn {
-      width: 160px;
-      padding: 1.5rem 1rem;
-      background: #222;
-      border: 2px solid #444;
-      color: #eee;
-      font-family: monospace;
-      font-size: 0.9rem;
-      cursor: pointer;
+    .product-info { padding: 1rem; flex: 1; display: flex; flex-direction: column; gap: 0.3rem; }
+    .product-name  { font-size: 0.85rem; font-weight: 600; }
+    .product-desc  { font-size: 0.75rem; color: #888; line-height: 1.5; flex: 1; }
+    .product-price { font-size: 0.95rem; font-weight: 700; color: #f90; font-family: monospace; margin-top: 0.5rem; }
+
+    footer {
       text-align: center;
-      transition: background 0.2s, border-color 0.2s;
+      padding: 2rem;
+      font-size: 0.7rem;
+      color: #bbb;
+      font-family: monospace;
     }
-    .target-btn:hover   { background: #2a2a2a; }
-    .target-btn.clicked { background: #f90; color: #111; border-color: #f90; }
 
-    #log {
-      margin-top: 1rem;
-      width: 640px;
-      height: 180px;
-      overflow-y: auto;
-      background: #1a1a1a;
-      padding: 0.75rem;
-      border: 1px solid #333;
-      font-size: 0.8rem;
-      line-height: 1.7;
-    }
-    .action { color: #f90; }
-    .state  { color: #888; }
-    .system { color: #4af; }
-
-    #gesture-cursor {
+    /* Gesture overlay */
+    #gs-overlay {
       position: fixed;
-      width: 24px;
-      height: 24px;
+      bottom: 1rem;
+      right: 1rem;
+      z-index: 100;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 0.3rem;
+      pointer-events: none;
+    }
+    #gs-camera {
+      position: relative;
+      width: 160px;
+      height: 120px;
+      border: 1px solid #e5e5e5;
+      border-radius: 4px;
+      overflow: hidden;
+      background: #000;
+    }
+    #gs-video, #gs-canvas {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      transform: scaleX(-1);
+    }
+    #gs-status   { font-family: monospace; font-size: 0.6rem; color: #bbb; }
+    #gs-feedback { font-family: monospace; font-size: 1.4rem; color: #f90; min-height: 1.8rem; text-align: right; }
+
+    #gs-cursor {
+      position: fixed;
+      width: 18px;
+      height: 18px;
       border-radius: 50%;
-      background: #f90;
-      border: 2px solid #fff;
+      background: rgba(255, 60, 60, 0.8);
+      box-shadow: 0 0 6px 2px rgba(255, 60, 60, 0.3);
       pointer-events: none;
       display: none;
       transform: translate(-50%, -50%);
-      z-index: 9999;
+      z-index: 200;
     }
-    #gesture-cursor.clicking { background: #f00; transform: translate(-50%, -50%) scale(1.4); }
+    #gs-cursor.clicking { transform: translate(-50%, -50%) scale(1.5); background: #f90; }
   </style>
 </head>
 <body>
 
-  <h1>Gesture Library — live test</h1>
-
-  <div id="main">
-    <div id="camera-wrapper">
-      <video id="video" autoplay playsinline muted></video>
-      <canvas id="canvas"></canvas>
+  <header>
+    <div class="logo">GestureShop</div>
+    <div class="nav-hint">
+      <span>Pinch ↑↓</span> scrollen &nbsp;·&nbsp;
+      <span>Pinch ←→</span> zurück/vor &nbsp;·&nbsp;
+      <span>Pinky</span> zeigen &amp; klicken
     </div>
+  </header>
 
-    <div id="sidebar">
-      <button class="target-btn" id="btn-a">Button A</button>
-      <button class="target-btn" id="btn-b">Button B</button>
-      <button class="target-btn" id="btn-c">Button C</button>
-    </div>
+  <div class="product-grid">
+
+    <a class="product-card" href="product.html?id=keyboard">
+      <div class="product-thumb" style="background:#f0eefa">⌨️</div>
+      <div class="product-info">
+        <div class="product-name">Mech Keyboard Pro</div>
+        <div class="product-desc">Taktiles Feedback, RGB, hot-swap Switches</div>
+        <div class="product-price">149,99 €</div>
+      </div>
+    </a>
+
+    <a class="product-card" href="product.html?id=mouse">
+      <div class="product-thumb" style="background:#eef5f0">🖱️</div>
+      <div class="product-info">
+        <div class="product-name">Wireless Mouse X</div>
+        <div class="product-desc">26.000 DPI, ergonomisch, 70 h Akku</div>
+        <div class="product-price">89,99 €</div>
+      </div>
+    </a>
+
+    <a class="product-card" href="product.html?id=monitor">
+      <div class="product-thumb" style="background:#faeef0">🖥️</div>
+      <div class="product-info">
+        <div class="product-name">Monitor 4K 32″</div>
+        <div class="product-desc">IPS, 144 Hz, HDR600, USB-C PD 65 W</div>
+        <div class="product-price">449,99 €</div>
+      </div>
+    </a>
+
+    <a class="product-card" href="product.html?id=hub">
+      <div class="product-thumb" style="background:#eef2f5">🔌</div>
+      <div class="product-info">
+        <div class="product-name">USB-C Hub 10-in-1</div>
+        <div class="product-desc">4K HDMI, SD, Ethernet, PD 100 W</div>
+        <div class="product-price">69,99 €</div>
+      </div>
+    </a>
+
+    <a class="product-card" href="product.html?id=webcam">
+      <div class="product-thumb" style="background:#faf5ee">📷</div>
+      <div class="product-info">
+        <div class="product-name">Webcam HD Pro</div>
+        <div class="product-desc">4K 60fps, Autofokus, Noise Cancelling</div>
+        <div class="product-price">129,99 €</div>
+      </div>
+    </a>
+
+    <a class="product-card" href="product.html?id=headset">
+      <div class="product-thumb" style="background:#eff5ee">🎧</div>
+      <div class="product-info">
+        <div class="product-name">Headset Studio</div>
+        <div class="product-desc">ANC, 40 h Laufzeit, Klapp-Mikrofon</div>
+        <div class="product-price">199,99 €</div>
+      </div>
+    </a>
+
   </div>
 
-  <div id="log"></div>
+  <footer>GestureShop Demo · mi-web-technologien-beiboot-ss2026</footer>
 
-  <div id="gesture-cursor"></div>
+  <div id="gs-overlay">
+    <div id="gs-camera">
+      <video id="gs-video" autoplay playsinline muted></video>
+      <canvas id="gs-canvas"></canvas>
+    </div>
+    <div id="gs-status">Initialisiere…</div>
+    <div id="gs-feedback"></div>
+  </div>
+  <div id="gs-cursor"></div>
 
-  <script type="module">
-    import {
-      GestureRecognizer,
-      PoseLandmarker,
-      FilesetResolver,
-      DrawingUtils,
-    } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/vision_bundle.mjs";
-
-    import {
-      GestureLibrary,
-      PinchSwipeGesture,
-      ShoulderTapGesture,
-      HandsToHeadGesture,
-      HandsToHipsGesture,
-      PinkyPointerGesture,
-      PinkyClickGesture,
-    } from "./lib/index.js";
-
-    // ── DOM ──────────────────────────────────────────────────────────────────
-    const video   = document.getElementById("video");
-    const canvas  = document.getElementById("canvas");
-    const ctx     = canvas.getContext("2d");
-    const logEl   = document.getElementById("log");
-    const cursor  = document.getElementById("gesture-cursor");
-
-    // Flash button when clicked
-    document.querySelectorAll(".target-btn").forEach(btn => {
-      btn.addEventListener("click", () => {
-        btn.classList.add("clicked");
-        setTimeout(() => btn.classList.remove("clicked"), 400);
-      });
-    });
-
-    function log(text, cls = "system") {
-      const line = document.createElement("div");
-      line.className = cls;
-      line.textContent = `[${new Date().toLocaleTimeString()}] ${text}`;
-      logEl.prepend(line);
-    }
-
-    // ── Library setup ────────────────────────────────────────────────────────
-    const lib = new GestureLibrary();
-
-    lib
-      .register(new PinchSwipeGesture())
-      .register(new ShoulderTapGesture())
-      .register(new HandsToHeadGesture())
-      .register(new HandsToHipsGesture())
-      .register(new PinkyPointerGesture())
-      .register(new PinkyClickGesture({ cooldownMs: 2000 }));
-
-    lib.on("pinch-swipe",   ({ action, state }) => {
-      if (action) log(`pinch-swipe  → action: ${action}`, "action");
-      else        log(`pinch-swipe  → state: ${state}`,   "state");
-    });
-    lib.on("shoulder-tap",  ({ action, state }) => {
-      if (action) log(`shoulder-tap → action: ${action}`, "action");
-      else        log(`shoulder-tap → state: ${state}`,   "state");
-    });
-    lib.on("hands-to-head", ({ action, state }) => {
-      if (action) log(`hands-to-head → action: ${action}`, "action");
-      else        log(`hands-to-head → state: ${state}`,   "state");
-    });
-    lib.on("hands-to-hips", ({ action, state }) => {
-      if (action) log(`hands-to-hips → action: ${action}`, "action");
-      else        log(`hands-to-hips → state: ${state}`,   "state");
-    });
-
-    // ── Pinky pointer: cursor movement only ─────────────────────────────────
-    let cursorTimer = null;
-
-    // Shared helper: place the cursor at zone-remapped coords
-    function placeCursor(x, y) {
-      // x, y already remapped to [0,1] by the gesture's zone config.
-      // Camera x is un-mirrored; flip for mirrored video display.
-      const screenX = (1 - x) * window.innerWidth;
-      const screenY = y * window.innerHeight;
-      cursor.style.display = "block";
-      cursor.style.left    = `${screenX}px`;
-      cursor.style.top     = `${screenY}px`;
-      clearTimeout(cursorTimer);
-      cursorTimer = setTimeout(() => { cursor.style.display = "none"; }, 200);
-      return { screenX, screenY };
-    }
-
-    lib.on("pinky-pointer", ({ x, y }) => {
-      placeCursor(x, y);
-    });
-
-    // ── Pinky click: click action (subject to GestureLibrary cooldown) ───────
-    lib.on("pinky-click", ({ x, y }) => {
-      const { screenX, screenY } = placeCursor(x, y);
-      log("pinky-click → click", "action");
-      cursor.classList.add("clicking");
-      setTimeout(() => cursor.classList.remove("clicking"), 200);
-
-      cursor.style.display = "none";
-      const target = document.elementFromPoint(screenX, screenY);
-      cursor.style.display = "block";
-      if (target) target.click();
-    });
-
-    // ── MediaPipe setup ──────────────────────────────────────────────────────
-    log("Lade Modelle…");
-
-    const vision = await FilesetResolver.forVisionTasks(
-      "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm"
-    );
-
-    const [handRecognizer, poseRecognizer] = await Promise.all([
-      GestureRecognizer.createFromOptions(vision, {
-        baseOptions: {
-          modelAssetPath: "https://storage.googleapis.com/mediapipe-models/gesture_recognizer/gesture_recognizer/float16/1/gesture_recognizer.task",
-          delegate: "GPU",
-        },
-        runningMode: "VIDEO",
-        numHands: 2,
-      }),
-      PoseLandmarker.createFromOptions(vision, {
-        baseOptions: {
-          modelAssetPath: "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task",
-          delegate: "GPU",
-        },
-        runningMode: "VIDEO",
-        numPoses: 1,
-      }),
-    ]);
-
-    log("Modelle geladen. Kamera startet…");
-
-    const stream = await navigator.mediaDevices.getUserMedia({
-      video: { width: 640, height: 480, facingMode: "user" },
-    });
-    video.srcObject = stream;
-    video.addEventListener("loadeddata", () => {
-      canvas.width  = video.videoWidth;
-      canvas.height = video.videoHeight;
-      log("Kamera aktiv. Gesten werden erkannt.");
-      requestAnimationFrame(loop);
-    });
-
-    // ── Frame loop ───────────────────────────────────────────────────────────
-    let lastVideoTime = -1;
-    const drawing = new DrawingUtils(ctx);
-
-    function loop() {
-      if (video.readyState < 2 || video.currentTime === lastVideoTime) {
-        requestAnimationFrame(loop); return;
-      }
-      lastVideoTime = video.currentTime;
-
-      const ts          = performance.now();
-      const handResults = handRecognizer.recognizeForVideo(video, ts);
-      let   poseResults = null;
-      try { poseResults = poseRecognizer.detectForVideo(video, ts); } catch (_) {}
-
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      // Draw active zone for PinkyPointer (matches zoneX/zoneY in PinkyPointerGesture defaults)
-      const ZONE = { x0: 0.15, x1: 0.85, y0: 0.10, y1: 0.90 };
-      const zx = ZONE.x0 * canvas.width;
-      const zy = ZONE.y0 * canvas.height;
-      const zw = (ZONE.x1 - ZONE.x0) * canvas.width;
-      const zh = (ZONE.y1 - ZONE.y0) * canvas.height;
-      ctx.strokeStyle = "rgba(255, 153, 0, 0.5)";
-      ctx.lineWidth = 2;
-      ctx.setLineDash([8, 6]);
-      ctx.strokeRect(zx, zy, zw, zh);
-      ctx.setLineDash([]);
-      ctx.fillStyle = "rgba(255, 153, 0, 0.12)";
-      ctx.fillRect(zx, zy, zw, zh);
-
-      for (let i = 0; i < handResults.landmarks.length; i++) {
-        drawing.drawConnectors(handResults.landmarks[i], GestureRecognizer.HAND_CONNECTIONS, { color: "#00c8ff", lineWidth: 2 });
-        drawing.drawLandmarks(handResults.landmarks[i],  { color: "#fff", fillColor: "#00c8ff", radius: 3 });
-      }
-      if (poseResults?.landmarks?.length) {
-        drawing.drawConnectors(poseResults.landmarks[0], PoseLandmarker.POSE_CONNECTIONS, { color: "rgba(255,255,255,0.2)", lineWidth: 1 });
-      }
-
-      lib.detect({ handResults, poseResults }, ts);
-
-      requestAnimationFrame(loop);
-    }
-  </script>
+  <script type="module" src="scripts/gesture-shop.js"></script>
 </body>
 </html>

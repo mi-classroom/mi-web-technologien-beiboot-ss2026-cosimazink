@@ -1,4 +1,5 @@
-// Fist with pinky + thumb extended → action "click" with pinky-tip position.
+// "I love you" sign (🤟 pinky + index + thumb extended, middle + ring curled) → action "click".
+// Index must be extended to distinguish from PinkyPointerGesture (pinky only), preventing accidental clicks.
 // Internal cooldown prevents rapid re-firing. Use alongside PinkyPointerGesture.
 
 import { BaseGesture }            from "../gesture-base.js";
@@ -34,12 +35,12 @@ export class PinkyClickGesture extends BaseGesture {
       const lm = handResults.landmarks[i];
 
       const pinkyExtended = fingerExtended(lm, 20, 18);
-      const indexCurled   = !fingerExtended(lm, 8,  6);
+      const indexExtended = fingerExtended(lm, 8,  6);
       const middleCurled  = !fingerExtended(lm, 12, 10);
       const ringCurled    = !fingerExtended(lm, 16, 14);
       const thumbExtended = dist2D(lm[4], lm[5]) > thumbExtendMin;
 
-      if (!(pinkyExtended && indexCurled && middleCurled && ringCurled && thumbExtended)) continue;
+      if (!(pinkyExtended && indexExtended && middleCurled && ringCurled && thumbExtended)) continue;
 
       const { x, y } = lm[20];
       const nx = Math.max(0, Math.min(1, (x - zoneX[0]) / (zoneX[1] - zoneX[0])));
