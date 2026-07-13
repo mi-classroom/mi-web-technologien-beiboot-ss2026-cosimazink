@@ -1,43 +1,74 @@
 import {
-  GestureRecognizer,  // ML model
-  PoseLandmarker,     // Body pose model
-  FilesetResolver,    // Helper: loads WebAssembly files
-  DrawingUtils        // Helper: draws landmarks and skeleton on canvas
+  GestureRecognizer,
+  PoseLandmarker,
+  FilesetResolver,
+  DrawingUtils
 } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/vision_bundle.mjs";
 
-import { getPinchResult }                          from "./gestures/pinch-swipe.js";
-import { getShoulderTapResult, resetShoulderTap }  from "./gestures/shoulder-tap.js";
-import { getHandsToHeadResult, resetHandsToHead }  from "./gestures/hands-to-head.js";
-import { getHandsToHipsResult, resetHandsToHips }  from "./gestures/hands-to-hips.js";
+import {
+  GestureLibrary,
+  PinchSwipeGesture,
+  ShoulderTapGesture,
+  HandsToHeadGesture,
+  HandsToHipsGesture,
+  PinkyPointerGesture,
+  PinkyClickGesture,
+} from "../lib/index.js";
 
 const LANDMARK_NAMES = [
   "WRIST",
-  "THUMB_CMC", "THUMB_MCP", "THUMB_IP", "THUMB_TIP",      // 1-4 thumb
-  "INDEX_MCP", "INDEX_PIP", "INDEX_DIP", "INDEX_TIP",     // 5-8 index finger
-  "MIDDLE_MCP", "MIDDLE_PIP", "MIDDLE_DIP", "MIDDLE_TIP", // 9-12 middle finger
-  "RING_MCP", "RING_PIP", "RING_DIP", "RING_TIP",         // 13-16 ring finger
-  "PINKY_MCP", "PINKY_PIP", "PINKY_DIP", "PINKY_TIP"      // 17-20 pinky
+  "THUMB_CMC", "THUMB_MCP", "THUMB_IP", "THUMB_TIP",
+  "INDEX_MCP", "INDEX_PIP", "INDEX_DIP", "INDEX_TIP",
+  "MIDDLE_MCP", "MIDDLE_PIP", "MIDDLE_DIP", "MIDDLE_TIP",
+  "RING_MCP", "RING_PIP", "RING_DIP", "RING_TIP",
+  "PINKY_MCP", "PINKY_PIP", "PINKY_DIP", "PINKY_TIP"
 ];
 
-const ACTIONS = new Set(["right", "left", "up", "down"]);
+const lib = new GestureLibrary();
+lib
+  .register(new PinchSwipeGesture({ minScale: 0 }))
+  .register(new ShoulderTapGesture())
+  .register(new HandsToHeadGesture())
+  .register(new HandsToHipsGesture())
+  .register(new PinkyPointerGesture())
+  .register(new PinkyClickGesture());
 
-const HAND_LABELS = {
-  right: "→ pinch right",
-  left:  "← pinch left",
-  up:    "↑ pinch up",
-  down:  "↓ pinch down",
+const ACTION_LABELS = {
+  "pinch-swipe:right":  "→ Pinch Swipe",
+  "pinch-swipe:left":   "← Pinch Swipe",
+  "pinch-swipe:up":     "↑ Pinch Swipe",
+  "pinch-swipe:down":   "↓ Pinch Swipe",
+  "shoulder-tap:right": "→ Schulter-Tap",
+  "shoulder-tap:left":  "← Schulter-Tap",
+  "hands-to-head:up":   "↑ Hände zum Kopf",
+  "hands-to-hips:down": "↓ Hände zur Hüfte",
+  "pinky-click:click":  "● Pinky Click",
 };
-const BODY_LABELS = {
-  right: "→ shoulder tap",
-  left:  "← shoulder tap",
-  up:    "↑ hands to head",
-  down:  "↓ hands to hips",
+const STATE_LABELS = {
+  arming:   "○ Pinch lädt…",
+  armed:    "● Pinch bereit",
+  holding:  "○ hält…",
+  pointing: "◉ Pinky Pointer",
 };
-const PENDING_LABELS = {
-  arming:  "○ arming…",
-  armed:   "● armed",
-  holding: "○ holding…",
-};
+
+let activeLabel = null;
+let clearTimer  = null;
+
+function showLabel(text, ttl) {
+  activeLabel = text;
+  clearTimeout(clearTimer);
+  clearTimer = setTimeout(() => { activeLabel = null; }, ttl);
+}
+
+for (const [event, label] of Object.entries(ACTION_LABELS)) {
+  lib.on(event, () => showLabel(label, 1500));
+}
+
+lib.on("pinch-swipe",   ({ state }) => { if (state) showLabel(STATE_LABELS[state] ?? state, 300); });
+lib.on("shoulder-tap",  ({ state }) => { if (state) showLabel(STATE_LABELS[state] ?? state, 300); });
+lib.on("hands-to-head", ({ state }) => { if (state) showLabel("○ Hände zum Kopf…",          300); });
+lib.on("hands-to-hips", ({ state }) => { if (state) showLabel("○ Hände zur Hüfte…",          300); });
+lib.on("pinky-pointer", ({ state }) => { if (state) showLabel(STATE_LABELS.pointing,          300); });
 
 const video          = document.getElementById("video");
 const canvas         = document.getElementById("canvas");
@@ -52,12 +83,6 @@ let lastVideoTime  = -1;
 let lastT          = performance.now();
 let frameCount     = 0;
 
-// Display timer: keeps fired gestures visible for 700ms
-let actionTimer     = null;
-let lockedLabel     = null; // set when an action fires, cleared after 700ms
-let currentPending  = "–"; // updated every frame for pending states
-
-// loads model
 async function init() {
   const vision = await FilesetResolver.forVisionTasks(
     "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm"
@@ -88,7 +113,6 @@ async function init() {
   await startCamera();
 }
 
-// turns camera on
 async function startCamera() {
   const stream = await navigator.mediaDevices.getUserMedia({
     video: { width: 640, height: 480, facingMode: "user" }
@@ -102,7 +126,6 @@ async function startCamera() {
   });
 }
 
-// loop that analyses every frame
 function predict() {
   if (video.readyState < 2) { requestAnimationFrame(predict); return; }
 
@@ -114,7 +137,6 @@ function predict() {
   const results     = recognizer.recognizeForVideo(video, ts);
   const inferenceMs = (performance.now() - ts).toFixed(1);
 
-  // FPS counter
   frameCount++;
   const elapsed = performance.now() - lastT;
   if (elapsed >= 1000) {
@@ -124,7 +146,6 @@ function predict() {
     lastT      = performance.now();
   }
 
-  // Pose detection for body gestures
   let poseResults = null;
   try { poseResults = poseRecognizer.detectForVideo(video, ts); } catch (e) { /* ignore */ }
 
@@ -132,60 +153,13 @@ function predict() {
   renderResults(results);
   drawPoseLandmarks(poseResults);
 
-  // ── Gesture detection (display only, no actions triggered) ───────────────
-  // minScale=0 → no distance gate, works at any distance from camera
-  const pinchResult = getPinchResult(results, ts, 0);
+  lib.detect({ handResults: results, poseResults }, ts);
 
-  let bodyResult = null;
-  if (poseResults?.landmarks?.length) {
-    const lm = poseResults.landmarks[0];
-    const r1 = getShoulderTapResult(lm, ts);
-    const r2 = getHandsToHeadResult(lm, ts);
-    const r3 = getHandsToHipsResult(lm, ts);
-    bodyResult = ACTIONS.has(r1) ? r1
-               : ACTIONS.has(r2) ? r2
-               : ACTIONS.has(r3) ? r3
-               : r1 || r2 || r3;
-  }
-
-  // Determine result + which label map to use
-  let gestureResult = null;
-  let labelMap      = HAND_LABELS;
-
-  if (ACTIONS.has(pinchResult)) {
-    gestureResult = pinchResult;
-    labelMap      = HAND_LABELS;
-  } else if (ACTIONS.has(bodyResult)) {
-    gestureResult = bodyResult;
-    labelMap      = BODY_LABELS;
-  } else if (pinchResult) {
-    gestureResult = pinchResult;   // pending pinch state (arming/armed)
-    labelMap      = HAND_LABELS;
-  } else if (bodyResult) {
-    gestureResult = bodyResult;    // pending body state (holding)
-    labelMap      = BODY_LABELS;
-  }
-
-  // Lock fired actions for 700ms so they stay readable
-  if (ACTIONS.has(gestureResult)) {
-    lockedLabel = labelMap[gestureResult];
-    clearTimeout(actionTimer);
-    actionTimer = setTimeout(() => { lockedLabel = null; }, 700);
-  }
-
-  // Pending states update immediately; fired actions are locked
-  currentPending = PENDING_LABELS[gestureResult] ?? null;
-  const displayText = lockedLabel ?? currentPending ?? "–";
-
-  gestureDisplay.textContent = displayText;
-  updateCustomGesture(displayText);
+  gestureDisplay.textContent = activeLabel ?? "–";
 
   requestAnimationFrame(predict);
 }
 
-// ── Drawing ───────────────────────────────────────────────────────────────────
-
-// shows hand skeleton on canvas
 function renderResults(results) {
   const drawing   = new DrawingUtils(ctx);
   const handsData = { Left: null, Right: null };
@@ -197,7 +171,7 @@ function renderResults(results) {
     const gesture    = results.gestures[i]?.[0]?.categoryName ?? "";
     const score      = results.gestures[i]?.[0]?.score ?? 0;
 
-    // MediaPipe labels are mirrored relative to the mirrored canvas, so swap
+    // MediaPipe labels are mirrored relative to the canvas — swap sides
     const label = handedness === "Left" ? "Right" : "Left";
     handsData[label] = { landmarks, worldmarks, gesture, score };
 
@@ -216,7 +190,6 @@ function renderResults(results) {
   updatePanel("right", handsData.Left);
 }
 
-// draws body skeleton on canvas
 function drawPoseLandmarks(poseResults) {
   if (!poseResults?.landmarks?.length) return;
   const drawing = new DrawingUtils(ctx);
@@ -232,7 +205,7 @@ function drawPoseLandmarks(poseResults) {
     radius: 2,
   });
 
-  // Nase (0), Schultern (11,12), Handgelenke (15,16), Hüften (23,24) gelb
+  // Highlight key points: nose (0), shoulders (11,12), wrists (15,16), hips (23,24)
   for (const i of [0, 11, 12, 15, 16, 23, 24]) {
     if (!lm[i] || (lm[i].visibility ?? 0) < 0.5) continue;
     drawing.drawLandmarks([lm[i]], {
@@ -241,9 +214,6 @@ function drawPoseLandmarks(poseResults) {
   }
 }
 
-// ── Panels ────────────────────────────────────────────────────────────────────
-
-// displays raw MediaPipe data per hand
 function updatePanel(side, data) {
   const noHand = document.getElementById(`no-hand-${side}`);
   const gestEl = document.getElementById(`gesture-${side}`);
@@ -258,11 +228,7 @@ function updatePanel(side, data) {
 
   noHand.style.display = "none";
 
-  // MediaPipe built-in gesture + our custom gesture below it
-  const mpLabel     = data.gesture ? `${data.gesture} (${(data.score * 100).toFixed(0)}%)` : "–";
-  const customLabel = lockedLabel ?? currentPending ?? "";
-  gestEl.innerHTML  = `<span>${mpLabel}</span>`
-                    + (customLabel ? `<span class="custom-gesture">${customLabel}</span>` : "");
+  gestEl.textContent = activeLabel ?? data.gesture ?? "–";
 
   lmEl.innerHTML = data.landmarks
     .map((lm, i) => {
@@ -274,16 +240,6 @@ function updatePanel(side, data) {
       </div>`;
     })
     .join("");
-}
-
-// keeps gesture-display and both panels in sync
-function updateCustomGesture(text) {
-  for (const side of ["left", "right"]) {
-    const el = document.getElementById(`gesture-${side}`);
-    if (!el) continue;
-    const span = el.querySelector(".custom-gesture");
-    if (span) span.textContent = text !== "–" ? text : "";
-  }
 }
 
 init().catch(err => {

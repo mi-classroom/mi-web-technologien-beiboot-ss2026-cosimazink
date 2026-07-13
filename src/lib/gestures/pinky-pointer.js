@@ -1,29 +1,12 @@
-/**
- * PinkyPointerGesture — move a cursor with the pinky finger.
- *
- * Fist with only the pinky extended → state "pointing" with pinky-tip position.
- * Click detection is intentionally NOT part of this gesture — use PinkyClickGesture
- * for that so the GestureLibrary cooldown can apply to clicks independently.
- *
- * Returned { x, y } are remapped from the active zone (zoneX/zoneY) to [0, 1]
- * so zone edges already correspond to screen edges.
- * x is in un-mirrored camera space — for a CSS-mirrored video use:
- *   screenX = (1 - x) * windowWidth
- *
- * @example
- * lib.register(new PinkyPointerGesture());
- * lib.on("pinky-pointer", ({ x, y }) => moveCursor(x, y));
- */
+// Fist with only the pinky extended → state "pointing" with pinky-tip position.
+// { x, y } are remapped from the active zone to [0,1]; for a mirrored canvas use screenX = (1-x) * width
 
-import { BaseGesture }     from "../gesture-base.js";
-import { fingerExtended }  from "../utils/utils.js";
+import { BaseGesture }    from "../gesture-base.js";
+import { fingerExtended } from "../utils/utils.js";
 
 const DEFAULTS = {
   confidenceMin: 0.7,
-  // Active zone within the camera frame [min, max] in normalised coords.
-  // Coordinates are remapped so zone edges = screen edges, keeping the hand
-  // fully visible even when pointing at screen corners.
-  zoneX: [0.15, 0.85],
+  zoneX: [0.15, 0.85], // active region of the camera frame (normalised)
   zoneY: [0.10, 0.90],
 };
 

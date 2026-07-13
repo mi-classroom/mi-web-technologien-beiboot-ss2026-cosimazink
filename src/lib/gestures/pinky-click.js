@@ -1,31 +1,13 @@
-/**
- * PinkyClickGesture — trigger a click with pinky + thumb.
- *
- * Detects the same base fist-with-pinky pose as PinkyPointerGesture, plus the
- * thumb being extended outward. Returns action "click" with the pinky-tip
- * position so the caller knows where on screen to click.
- *
- * Register alongside PinkyPointerGesture. The internal cooldownMs option
- * prevents rapid re-firing when the gesture is held.
- *
- * Returned { x, y } use the same zone remapping as PinkyPointerGesture so both
- * gestures report coordinates in the same space.
- *
- * @example
- * lib.register(new PinkyPointerGesture());
- * lib.register(new PinkyClickGesture());
- *
- * lib.on("pinky-pointer", ({ x, y }) => moveCursor(x, y));
- * lib.on("pinky-click",   ({ x, y }) => triggerClickAt(x, y));
- */
+// Fist with pinky + thumb extended → action "click" with pinky-tip position.
+// Internal cooldown prevents rapid re-firing. Use alongside PinkyPointerGesture.
 
-import { BaseGesture }              from "../gesture-base.js";
-import { dist2D, fingerExtended }   from "../utils/utils.js";
+import { BaseGesture }            from "../gesture-base.js";
+import { dist2D, fingerExtended } from "../utils/utils.js";
 
 const DEFAULTS = {
   confidenceMin:  0.7,
   thumbExtendMin: 0.10, // min dist thumb tip → index MCP to count as extended
-  cooldownMs:     2000, // minimum ms between two consecutive clicks
+  cooldownMs:     2000,
   zoneX: [0.15, 0.85],
   zoneY: [0.10, 0.90],
 };
@@ -43,7 +25,6 @@ export class PinkyClickGesture extends BaseGesture {
   detect(handResults, ts) {
     const { confidenceMin, thumbExtendMin, cooldownMs, zoneX, zoneY } = this._cfg;
 
-    // Reject immediately if still within cooldown window
     if (ts - this._lastClick < cooldownMs) return null;
 
     for (let i = 0; i < handResults.landmarks.length; i++) {

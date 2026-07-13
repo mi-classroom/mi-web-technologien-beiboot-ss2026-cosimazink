@@ -1,16 +1,4 @@
-/**
- * HandsToHipsGesture — far-mode body-pose gesture.
- *
- * Both wrists held near their same-side hip for 700 ms triggers "down".
- * Left wrist → left hip, right wrist → right hip.
- *
- * Actions: "down"
- * States:  "holding"
- *
- * @example
- * lib.register(new HandsToHipsGesture());
- * lib.on("hands-to-hips:down", () => Reveal.down());
- */
+// Both wrists held near their same-side hip for 700 ms → action "down"
 
 import { BaseGesture }              from "../gesture-base.js";
 import { dist2D, processHoldState } from "../utils/utils.js";

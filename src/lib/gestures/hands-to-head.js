@@ -1,15 +1,4 @@
-/**
- * HandsToHeadGesture — far-mode body-pose gesture.
- *
- * Both wrists held near the nose for 700 ms triggers "up".
- *
- * Actions: "up"
- * States:  "holding"
- *
- * @example
- * lib.register(new HandsToHeadGesture());
- * lib.on("hands-to-head:up", () => Reveal.up());
- */
+// Both wrists held near the nose for 700 ms → action "up"
 
 import { BaseGesture }              from "../gesture-base.js";
 import { dist2D, processHoldState } from "../utils/utils.js";

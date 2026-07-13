@@ -1,24 +1,8 @@
-/**
- * PinchSwipeGesture — near-mode hand gesture.
- *
- * Pinch (thumb tip + index tip closer than threshold) and hold for 500 ms,
- * then swipe in any direction to trigger a directional action.
- *
- * Actions:  "right" | "left" | "up" | "down"
- * States:   "arming" | "armed"
- *
- * The gesture automatically ignores hands that are too far from the camera
- * (hand appears smaller than `minScale` in normalised coordinates).
- * Pass `minScale: 0` to disable this gate (useful for debug views).
- *
- * @example
- * lib.register(new PinchSwipeGesture());
- * lib.on("pinch-swipe:right", () => Reveal.right());
- */
+// Pinch (thumb + index tip) and hold 500 ms, then swipe → "right" | "left" | "up" | "down"
 
-import { BaseGesture }    from "../gesture-base.js";
-import { OneEuroFilter }  from "../utils/one-euro-filter.js";
-import { dist2D }         from "../utils/utils.js";
+import { BaseGesture }   from "../gesture-base.js";
+import { OneEuroFilter } from "../utils/one-euro-filter.js";
+import { dist2D }        from "../utils/utils.js";
 
 const SWIPE_ACTIONS = new Set(["right", "left", "up", "down"]);
 
@@ -78,13 +62,7 @@ export class PinchSwipeGesture extends BaseGesture {
     return pending ? { state: pending } : null;
   }
 
-  /**
-   * Returns true when at least one hand is large enough for near-mode detection.
-   * Exposed so a consuming app can switch between hand and pose gesture modes.
-   *
-   * @param {object} handResults - GestureRecognizer result
-   * @returns {boolean}
-   */
+  // True when at least one hand is large enough for near-mode detection.
   isNearMode(handResults) {
     const { confidenceMin, minScale } = this._cfg;
     for (let i = 0; i < handResults.landmarks.length; i++) {
@@ -102,8 +80,6 @@ export class PinchSwipeGesture extends BaseGesture {
     }
   }
 
-  // ── private ───────────────────────────────────────────────────────────────
-
   _makePinchState() {
     return { phase: "idle", armedAt: null, prevX: null, prevY: null,
              accumX: 0, accumY: 0, lockedAxis: null };
@@ -119,8 +95,7 @@ export class PinchSwipeGesture extends BaseGesture {
 
   _detectPinch(lm, f, ts, label) {
     const { pinchThreshold, pinchHoldMs, axisLockThreshold, axisRatio, pinchMoveDelta } = this._cfg;
-    // Index finger must be at least partially extended (PIP above MCP) to
-    // distinguish a real pinch from a closed fist where tips accidentally meet.
+    // index partially extended (PIP above MCP) → not a closed fist
     const indexExtended = lm[6].y < lm[5].y;
     const isPinching = indexExtended && dist2D(lm[4], lm[8]) < pinchThreshold;
     const st         = this._pinchState[label];

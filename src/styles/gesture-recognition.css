@@ -108,9 +108,3 @@
   color: var(--orange);
   text-align: center;
 }
-
-.custom-gesture {
-  font-size: var(--text-m);
-  color: var(--orange);
-  margin-top: var(--xs);
-}
