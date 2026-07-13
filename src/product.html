@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Produkt — GestureShop</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: system-ui, sans-serif;
+      background: #f5f5f5;
+      color: #111;
+    }
+
+    header {
+      background: #fff;
+      border-bottom: 1px solid #e5e5e5;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 2rem;
+      height: 52px;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+    .logo      { font-size: 1rem; font-weight: 700; color: #f90; text-decoration: none; }
+    .back-link {
+      font-size: 0.75rem;
+      font-family: monospace;
+      color: #888;
+      text-decoration: none;
+    }
+    .back-link:hover { color: #f90; }
+
+    /* Product detail */
+    .product-detail {
+      max-width: 860px;
+      margin: 2rem auto;
+      padding: 0 2rem;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2.5rem;
+      align-items: start;
+    }
+
+    .product-image {
+      aspect-ratio: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 6rem;
+      background: #fff;
+      border: 1px solid #e5e5e5;
+      border-radius: 6px;
+    }
+
+    .product-meta h1    { font-size: 1.3rem; font-weight: 700; margin-bottom: 0.4rem; }
+    .product-price-large {
+      font-size: 1.8rem;
+      font-weight: 800;
+      color: #f90;
+      font-family: monospace;
+      margin-bottom: 1rem;
+    }
+    .product-short  { font-size: 0.82rem; color: #666; line-height: 1.7; margin-bottom: 1.2rem; }
+
+    .add-btn {
+      width: 100%;
+      padding: 0.8rem;
+      background: #f90;
+      color: #fff;
+      font-size: 0.85rem;
+      font-weight: 700;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .add-btn:hover { background: #e08500; }
+
+    .specs { margin-top: 1.2rem; }
+    .spec-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.78rem;
+      padding: 0.4rem 0;
+      border-bottom: 1px solid #eee;
+      color: #666;
+    }
+    .spec-row span:last-child { color: #111; }
+
+    /* Sections */
+    .section {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 0 2rem 2rem;
+    }
+    .section h2 {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #aaa;
+      margin-bottom: 0.8rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid #e5e5e5;
+    }
+    .section p { font-size: 0.82rem; color: #555; line-height: 1.8; margin-bottom: 0.8rem; }
+
+    /* Reviews */
+    .review {
+      background: #fff;
+      border: 1px solid #e5e5e5;
+      border-radius: 4px;
+      padding: 0.9rem 1rem;
+      margin-bottom: 0.6rem;
+    }
+    .review-header { display: flex; justify-content: space-between; margin-bottom: 0.3rem; font-size: 0.75rem; }
+    .review-author { font-weight: 600; }
+    .review-stars  { color: #f90; }
+    .review p      { font-size: 0.78rem; color: #666; line-height: 1.6; }
+
+    /* Related */
+    .related-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.8rem;
+    }
+    .related-card {
+      background: #fff;
+      border: 1px solid #e5e5e5;
+      border-radius: 4px;
+      padding: 0.8rem;
+      text-decoration: none;
+      color: inherit;
+      display: flex;
+      align-items: center;
+      gap: 0.7rem;
+      transition: box-shadow 0.15s;
+    }
+    .related-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.07); }
+    .related-thumb { font-size: 1.6rem; }
+    .related-name  { font-size: 0.78rem; font-weight: 600; }
+    .related-price { font-size: 0.73rem; color: #f90; font-family: monospace; }
+
+    footer {
+      text-align: center;
+      padding: 2rem;
+      font-size: 0.7rem;
+      color: #bbb;
+      font-family: monospace;
+      border-top: 1px solid #e5e5e5;
+      margin-top: 1rem;
+    }
+
+    /* Gesture overlay */
+    #gs-overlay {
+      position: fixed;
+      bottom: 1rem;
+      right: 1rem;
+      z-index: 100;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 0.3rem;
+      pointer-events: none;
+    }
+    #gs-camera {
+      position: relative;
+      width: 160px;
+      height: 120px;
+      border: 1px solid #e5e5e5;
+      border-radius: 4px;
+      overflow: hidden;
+      background: #000;
+    }
+    #gs-video, #gs-canvas {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      transform: scaleX(-1);
+    }
+    #gs-status   { font-family: monospace; font-size: 0.6rem; color: #bbb; }
+    #gs-feedback { font-family: monospace; font-size: 1.4rem; color: #f90; min-height: 1.8rem; text-align: right; }
+
+    #gs-cursor {
+      position: fixed;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: rgba(255, 60, 60, 0.8);
+      box-shadow: 0 0 6px 2px rgba(255, 60, 60, 0.3);
+      pointer-events: none;
+      display: none;
+      transform: translate(-50%, -50%);
+      z-index: 200;
+    }
+    #gs-cursor.clicking { transform: translate(-50%, -50%) scale(1.5); background: #f90; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <a class="logo" href="lib-test.html">GestureShop</a>
+    <a class="back-link" href="lib-test.html">← Zurück zum Shop</a>
+  </header>
+
+  <div class="product-detail">
+    <div class="product-image" id="p-thumb">⌨️</div>
+
+    <div class="product-meta">
+      <h1 id="p-name">Mech Keyboard Pro</h1>
+      <div class="product-price-large" id="p-price">149,99 €</div>
+      <p class="product-short" id="p-short"></p>
+      <button class="add-btn" id="add-btn">In den Warenkorb</button>
+      <div class="specs" id="p-specs"></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Beschreibung</h2>
+    <p id="p-desc1"></p>
+    <p id="p-desc2"></p>
+    <p id="p-desc3"></p>
+  </div>
+
+  <div class="section">
+    <h2>Bewertungen</h2>
+    <div class="review">
+      <div class="review-header">
+        <span class="review-author" id="r1-author"></span>
+        <span class="review-stars">★★★★★</span>
+      </div>
+      <p id="r1-text"></p>
+    </div>
+    <div class="review">
+      <div class="review-header">
+        <span class="review-author" id="r2-author"></span>
+        <span class="review-stars">★★★★☆</span>
+      </div>
+      <p id="r2-text"></p>
+    </div>
+    <div class="review">
+      <div class="review-header">
+        <span class="review-author">A. R.</span>
+        <span class="review-stars">★★★★★</span>
+      </div>
+      <p>Genau das was ich gesucht habe. Kaufe definitiv wieder hier.</p>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Ähnliche Produkte</h2>
+    <div class="related-grid" id="related"></div>
+  </div>
+
+  <footer>GestureShop Demo · mi-web-technologien-beiboot-ss2026</footer>
+
+  <div id="gs-overlay">
+    <div id="gs-camera">
+      <video id="gs-video" autoplay playsinline muted></video>
+      <canvas id="gs-canvas"></canvas>
+    </div>
+    <div id="gs-status">Initialisiere…</div>
+    <div id="gs-feedback"></div>
+  </div>
+  <div id="gs-cursor"></div>
+
+  <script>
+    const PRODUCTS = {
+      keyboard: {
+        name: "Mech Keyboard Pro", price: "149,99 €", emoji: "⌨️", bg: "#f0eefa",
+        short: "Taktiles Feedback, RGB-Beleuchtung, hot-swap Switches — für professionelle Ansprüche.",
+        specs: [["Switch", "Cherry MX Brown"], ["Layout", "TKL (87 Tasten)"], ["Anschluss", "USB-C, abnehmbares Kabel"], ["Beleuchtung", "Per-Key RGB"], ["Gewicht", "780 g"]],
+        desc: ["Das Mech Keyboard Pro setzt neue Maßstäbe im Bereich mechanischer Tastaturen. Die Cherry MX Brown Switches bieten ein taktiles Feedback ohne lautes Klicken — ideal für Büro und Home-Office gleichermaßen.", "Dank hot-swap-fähiger Switches kannst du die Tastenmechanismen ohne Löten tauschen. Probiere verschiedene Switches aus und finde deine perfekte Haptik. Das TKL-Layout spart Platz auf dem Schreibtisch.", "Die per-Key RGB-Beleuchtung lässt sich vollständig anpassen. Über 16 Millionen Farben, zahlreiche Effekte und profilbasierte Konfiguration inklusive."],
+        r1: ["M. K.", "Absolut begeistert — Qualität top, Lieferung schnell. Die Switches fühlen sich hervorragend an."],
+        r2: ["T. L.", "Sehr gutes Keyboard, Preis-Leistung stimmt. Einziger Abzug: Anleitung ausbaufähig."],
+        related: [{ id: "mouse", emoji: "🖱️", name: "Wireless Mouse X", price: "89,99 €" }, { id: "hub", emoji: "🔌", name: "USB-C Hub 10-in-1", price: "69,99 €" }, { id: "headset", emoji: "🎧", name: "Headset Studio", price: "199,99 €" }],
+      },
+      mouse: {
+        name: "Wireless Mouse X", price: "89,99 €", emoji: "🖱️", bg: "#eef5f0",
+        short: "26.000 DPI, ergonomisches Design, 70 Stunden Akkulaufzeit — präzise und ausdauernd.",
+        specs: [["Sensor", "Optisch 26.000 DPI"], ["Verbindung", "2,4 GHz + Bluetooth"], ["Akku", "Li-Ion, ~70 h"], ["Tasten", "7 (programmierbar)"], ["Gewicht", "95 g"]],
+        desc: ["Die Wireless Mouse X verbindet höchste Präzision mit maximalem Komfort. Der optische Sensor mit bis zu 26.000 DPI reagiert selbst auf schnellste Bewegungen ohne Verzögerung.", "Das ergonomische Design reduziert Handgelenksbelastung beim langen Arbeiten. Die Gummierung an den Griffmulden sorgt für sicheren Halt auch bei intensiven Sessions.", "Mit bis zu 70 Stunden Akkulaufzeit wirst du selten aufladen müssen. Über Bluetooth verbindest du bis zu drei Geräte gleichzeitig."],
+        r1: ["S. M.", "Endlich eine Maus, die zu meiner Hand passt. Präzision und Komfort top!"],
+        r2: ["J. B.", "Sehr leicht und trotzdem solide. Akku hält wie angegeben."],
+        related: [{ id: "keyboard", emoji: "⌨️", name: "Mech Keyboard Pro", price: "149,99 €" }, { id: "webcam", emoji: "📷", name: "Webcam HD Pro", price: "129,99 €" }, { id: "hub", emoji: "🔌", name: "USB-C Hub 10-in-1", price: "69,99 €" }],
+      },
+      monitor: {
+        name: "Monitor 4K 32″", price: "449,99 €", emoji: "🖥️", bg: "#faeef0",
+        short: "IPS-Panel, 144 Hz, HDR600, USB-C Power Delivery 65 W — Arbeiten und Spielen auf höchstem Niveau.",
+        specs: [["Panel", "IPS, 4K (3840×2160)"], ["Bildwiederholung", "144 Hz"], ["HDR", "HDR600"], ["Anschlüsse", "USB-C PD 65W, 2× HDMI 2.1, DP 1.4"], ["Reaktionszeit", "1 ms (GtG)"]],
+        desc: ["Der 32-Zoll IPS-Monitor liefert brillante Farben mit 98 % DCI-P3 Farbraumabdeckung — ideal für Grafikdesign, Videobearbeitung und anspruchsvolle Spiele in 4K.", "Mit 144 Hz und 1 ms Reaktionszeit bleibt das Bild selbst bei schnellen Spielszenen scharf. AMD FreeSync Premium Pro sorgt für ruckelfreies Gameplay.", "Der USB-C Anschluss mit 65 W Power Delivery versorgt dein Laptop mit Strom und überträgt das Videosignal — alles über ein einziges Kabel."],
+        r1: ["P. W.", "Bestes Investment für meinen Arbeitsplatz. Farben sind unglaublich."],
+        r2: ["C. N.", "Für Design-Arbeit unschlagbar. USB-C Hub-Funktion ist super praktisch."],
+        related: [{ id: "webcam", emoji: "📷", name: "Webcam HD Pro", price: "129,99 €" }, { id: "headset", emoji: "🎧", name: "Headset Studio", price: "199,99 €" }, { id: "hub", emoji: "🔌", name: "USB-C Hub 10-in-1", price: "69,99 €" }],
+      },
+      hub: {
+        name: "USB-C Hub 10-in-1", price: "69,99 €", emoji: "🔌", bg: "#eef2f5",
+        short: "4K HDMI, SD-Karten-Slot, 3× USB-A, Ethernet, PD 100 W — ein Hub für alles.",
+        specs: [["Video", "4K HDMI + VGA"], ["USB", "3× USB-A 3.0, 2× USB-C"], ["Karten", "SD, microSD"], ["Netzwerk", "Gigabit Ethernet"], ["Power Delivery", "100 W Pass-Through"]],
+        desc: ["Der USB-C Hub 10-in-1 macht aus einem einzigen USB-C Port deines Laptops eine vollwertige Workstation. Schließe Monitor, Festplatte, Kamera, Netzwerk und mehr gleichzeitig an.", "Power Delivery mit 100 W Pass-Through sorgt dafür, dass dein Laptop während der Arbeit vollständig geladen bleibt.", "Das kompakte Aluminium-Gehäuse passt in jede Tasche und hält intensivem Alltagseinsatz stand."],
+        r1: ["K. S.", "Genau das was ich für Homeoffice brauchte. Alles funktioniert sofort."],
+        r2: ["F. D.", "Kompakt, stabil, vielseitig. Habe schon viele Hubs ausprobiert — dieser ist der beste."],
+        related: [{ id: "keyboard", emoji: "⌨️", name: "Mech Keyboard Pro", price: "149,99 €" }, { id: "mouse", emoji: "🖱️", name: "Wireless Mouse X", price: "89,99 €" }, { id: "monitor", emoji: "🖥️", name: "Monitor 4K 32″", price: "449,99 €" }],
+      },
+      webcam: {
+        name: "Webcam HD Pro", price: "129,99 €", emoji: "📷", bg: "#faf5ee",
+        short: "4K 60fps, Autofokus, KI-Rauschunterdrückung, Privacy-Shutter — für professionelle Video-Calls.",
+        specs: [["Auflösung", "4K 30fps / 1080p 60fps"], ["Autofokus", "KI-gestützt"], ["Mikrofon", "Dual-Mic, Noise Cancelling"], ["Sichtfeld", "90°, anpassbar"], ["Befestigung", "Clip + Stativ-Gewinde"]],
+        desc: ["Die Webcam HD Pro liefert gestochen scharfe Bilder in 4K — für Video-Calls, Streaming und Content Creation auf professionellem Niveau.", "Das integrierte Dual-Mikrofon mit KI-Rauschunterdrückung filtert störende Hintergrundgeräusche zuverlässig heraus. Kein Headset mehr nötig für glasklaren Ton.", "Der mechanische Privacy-Shutter schützt deine Privatsphäre physisch. Das 90°-Weitwinkel-Objektiv erfasst auch größere Räume vollständig."],
+        r1: ["L. P.", "Endlich kein schlechtes Bild mehr in Video-Calls. Kollegen haben direkt nachgefragt welche Cam ich habe."],
+        r2: ["R. H.", "Bild und Ton sind hervorragend. Autofokus funktioniert sehr zuverlässig."],
+        related: [{ id: "headset", emoji: "🎧", name: "Headset Studio", price: "199,99 €" }, { id: "monitor", emoji: "🖥️", name: "Monitor 4K 32″", price: "449,99 €" }, { id: "hub", emoji: "🔌", name: "USB-C Hub 10-in-1", price: "69,99 €" }],
+      },
+      headset: {
+        name: "Headset Studio", price: "199,99 €", emoji: "🎧", bg: "#eff5ee",
+        short: "Active Noise Cancelling, 40 Stunden Laufzeit, Klapp-Mikrofon mit Mute-LED.",
+        specs: [["Treiber", "40 mm, Neodym"], ["ANC", "Hybrid Active Noise Cancelling"], ["Akku", "40 h (ANC an) / 60 h (ANC aus)"], ["Mikrofon", "Klappbar, mit Mute-LED"], ["Anschluss", "Bluetooth 5.3, USB-C, 3,5mm"]],
+        desc: ["Das Headset Studio vereint audiophile Klangqualität mit praktischem Design für den Arbeitsalltag. Der 40-mm-Neodym-Treiber liefert kraftvollen Bass und klare Höhen.", "Das hybride Active Noise Cancelling schaltet störende Umgebungsgeräusche zuverlässig ab. Der Transparency-Modus lässt dich die Umgebung wahrnehmen, ohne das Headset abzunehmen.", "Das klappbare Mikrofon mit integrierter Mute-LED zeigt klar an, ob du stummgeschaltet bist. Per USB-C Dongle erreichst du praktisch nulllatente Verbindung für Gaming."],
+        r1: ["N. V.", "ANC ist beeindruckend. Im Großraumbüro endlich konzentriert arbeiten."],
+        r2: ["B. K.", "Klang, Komfort, Akku — alles top. Das Mikrofon ist besser als viele standalone Mics."],
+        related: [{ id: "webcam", emoji: "📷", name: "Webcam HD Pro", price: "129,99 €" }, { id: "keyboard", emoji: "⌨️", name: "Mech Keyboard Pro", price: "149,99 €" }, { id: "mouse", emoji: "🖱️", name: "Wireless Mouse X", price: "89,99 €" }],
+      },
+    };
+
+    const id = new URLSearchParams(location.search).get("id") || "keyboard";
+    const p  = PRODUCTS[id] || PRODUCTS.keyboard;
+
+    document.title = `${p.name} — GestureShop`;
+    document.getElementById("p-thumb").textContent       = p.emoji;
+    document.getElementById("p-thumb").style.background  = p.bg;
+    document.getElementById("p-name").textContent        = p.name;
+    document.getElementById("p-price").textContent       = p.price;
+    document.getElementById("p-short").textContent       = p.short;
+    document.getElementById("p-desc1").textContent       = p.desc[0];
+    document.getElementById("p-desc2").textContent       = p.desc[1];
+    document.getElementById("p-desc3").textContent       = p.desc[2];
+    document.getElementById("r1-author").textContent     = p.r1[0];
+    document.getElementById("r1-text").textContent       = p.r1[1];
+    document.getElementById("r2-author").textContent     = p.r2[0];
+    document.getElementById("r2-text").textContent       = p.r2[1];
+
+    document.getElementById("add-btn").addEventListener("click", () => {
+      const btn = document.getElementById("add-btn");
+      btn.textContent = "✓ Hinzugefügt";
+      btn.style.background = "#4a9a4a";
+      setTimeout(() => { btn.textContent = "In den Warenkorb"; btn.style.background = ""; }, 1500);
+    });
+
+    const specsEl = document.getElementById("p-specs");
+    for (const [k, v] of p.specs) {
+      const row = document.createElement("div");
+      row.className = "spec-row";
+      row.innerHTML = `<span>${k}</span><span>${v}</span>`;
+      specsEl.appendChild(row);
+    }
+
+    const relatedEl = document.getElementById("related");
+    for (const r of p.related) {
+      const a = document.createElement("a");
+      a.className = "related-card";
+      a.href = `product.html?id=${r.id}`;
+      a.innerHTML = `<span class="related-thumb">${r.emoji}</span><div><div class="related-name">${r.name}</div><div class="related-price">${r.price}</div></div>`;
+      relatedEl.appendChild(a);
+    }
+  </script>
+
+  <script type="module" src="scripts/gesture-shop.js"></script>
+</body>
+</html>
