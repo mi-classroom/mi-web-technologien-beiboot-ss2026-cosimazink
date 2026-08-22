@@ -1,5 +1,4 @@
-import { GestureLibrary, TiltGesture, FingerCountGesture, selectHands, fingerExtendedRadial, thumbExtended, angle2D } from "../lib/index.js";
-import { MediaPipeSource } from "../lib/adapters/mediapipe-source.js";
+import { GestureLibrary, TiltGesture, FingerCountGesture, MediaPipeSource, selectHands, fingerExtendedRadial, thumbExtended, angle2D } from "../lib/index.js";
 import { REGISTERS } from "./gestures/index.js";
 import { CHORDS, chordFrequencies } from "./chords.js";
 
@@ -134,8 +133,8 @@ const activeRegisters = new Set();
 function updateToneAudible() {
   const audible = activeRegisters.size > 0;
   setToneAudible(audible);
-  toneStateEl.textContent = audible ? "Ton aktiv" : "Ton inaktiv";
-  toneStateEl.style.color = audible ? "#4caf50" : "#999";
+  toneStateEl.textContent = audible ? "Sound on" : "Sound off";
+  toneStateEl.style.color = audible ? "#999" : "#999";
 }
 
 for (const reg of REGISTERS) {
@@ -147,7 +146,7 @@ for (const reg of REGISTERS) {
   });
   toneLib.on(`${reg.id}:idle`, () => {
     activeRegisters.delete(reg.id);
-    if (activeRegisters.size === 0) registerEl.textContent = "–";
+    if (activeRegisters.size === 0) registerEl.textContent = " ";
     updateToneAudible();
   });
 }
@@ -171,8 +170,8 @@ let chordHandActive = false;
 function updateChordAudible() {
   const audible = chordHandActive;
   setChordAudible(audible);
-  chordStateEl.textContent = audible ? "Ton aktiv" : "Ton inaktiv";
-  chordStateEl.style.color = audible ? "#4caf50" : "#999";
+  chordStateEl.textContent = audible ? "Sound on" : "Sound off";
+  chordStateEl.style.color = audible ? "#999" : "#999";
 }
 
 chordLib.on("chord-hand", ({ count }) => {
@@ -182,7 +181,7 @@ chordLib.on("chord-hand", ({ count }) => {
 });
 chordLib.on("chord-hand:idle", () => {
   chordHandActive = false;
-  chordEl.textContent = "–";
+  chordEl.textContent = " ";
   updateChordAudible();
 });
 chordLib.on("chord-filter", ({ value }) => setChordFilterValue(value));
@@ -202,8 +201,8 @@ function setMode(next) {
   chordLib.reset();
   activeRegisters.clear();
   chordHandActive = false;
-  registerEl.textContent = "–";
-  chordEl.textContent = "–";
+  registerEl.textContent = " ";
+  chordEl.textContent = " ";
   updateToneAudible();
   updateChordAudible();
 }
@@ -229,9 +228,6 @@ modeChordsBtn.addEventListener("click", () => setMode("chords"));
   canvas.height = video.videoHeight;
   statusEl.textContent = "Aktiv";
 
-  // Zeigt den Canvas, den MediaPipe tatsächlich zu sehen bekommt (nach
-  // Belichtungskorrektur) — nur zur Veranschaulichung, z. B. bei einer
-  // Präsentation, keine Auswirkung auf die Erkennung selbst.
   debugCanvasWrapper.appendChild(source.debugCanvas);
   debugCanvasToggle.disabled = false;
 })().catch((err) => {
@@ -244,8 +240,8 @@ debugCanvasToggle.addEventListener("click", () => {
   debugCanvasVisible = !debugCanvasVisible;
   debugCanvasWrapper.classList.toggle("visible", debugCanvasVisible);
   debugCanvasToggle.textContent = debugCanvasVisible
-    ? "Belichtungskorrektur ausblenden"
-    : "Belichtungskorrektur einblenden";
+    ? "Hide exposure compensation"
+    : "Show exposure compensation";
 });
 
 // Live debug readout of which fingers are extended and the angle of the hand,
@@ -263,14 +259,13 @@ function updateDebug(handResults, ts) {
       `${label}: Daumen ${thumb}  Zeige ${f(8, 6)}  Mittel ${f(12, 10)}  Ring ${f(16, 14)}  Klein ${f(20, 18)}  |  Winkel ${angle}°`
     );
   }
-  if (handResults?.landmarks?.length === 0) lines.push("(gar keine Hand im Bild — auf Kamera-Freigabe/Beleuchtung prüfen)");
   debugEl.textContent = lines.join("\n");
 }
 
 function drawHands(handResults) {
   if (!canvas.width) return;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.fillStyle = "rgb(0, 140, 255)";
+  ctx.fillStyle = "rgb(126, 163, 238)";
   for (const lm of handResults?.landmarks ?? []) {
     for (const p of lm) {
       ctx.beginPath();

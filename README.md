@@ -56,6 +56,7 @@ import {
   clampRemap01,          // optional – Wert auf [0,1] remappen (geclamped)
   processHoldState,      // optional – Hold-Zustandsmaschine für Pose-Gesten
   Hysteresis,            // optional – Schmitt-Trigger gegen Flackern an einer Schwelle
+  MediaPipeSource,       // optional – Kamera-/Modell-Adapter, siehe unten
 } from "./lib/index.js";
 ```
 
@@ -237,11 +238,10 @@ export class MyGesture extends BaseGesture {
 
 ### MediaPipeSource (optionaler Adapter)
 
-Die Library selbst ist DOM-frei und kennt weder Kamera noch MediaPipe-Modelle – sie nimmt nur `{ handResults, poseResults }` entgegen. Wer sich das MediaPipe-Boilerplate (Modelle laden, Kamera starten, `requestAnimationFrame`-Loop) sparen will, kann optional `MediaPipeSource` importieren. Liegt bewusst **nicht** in `lib/index.js`, sondern in einem eigenen Adapter-Modul – siehe [ADR 005](./adr/005-application.md):
+Die Library selbst ist DOM-frei und kennt weder Kamera noch MediaPipe-Modelle – sie nimmt nur `{ handResults, poseResults }` entgegen. Wer sich das MediaPipe-Boilerplate (Modelle laden, Kamera starten, `requestAnimationFrame`-Loop) sparen will, kann optional `MediaPipeSource` importieren. Liegt in einem eigenen Adapter-Modul unter `lib/adapters/`, wird aber wie alles andere über `lib/index.js` re-exportiert – jede Anwendung nutzt die Library ausschließlich über diesen einen Entry-Point. Das kostet etwas architektonische Reinheit (der Adapter bringt eine DOM-/Netzwerk-Abhängigkeit mit, die dadurch transitiv an jedem Import von `lib/index.js` hängt, auch wenn man ihn gar nicht braucht), siehe [ADR 005](./adr/005-application.md):
 
 ```js
-import { GestureLibrary, PinkyPointerGesture } from "./lib/index.js";
-import { MediaPipeSource } from "./lib/adapters/mediapipe-source.js";
+import { GestureLibrary, PinkyPointerGesture, MediaPipeSource } from "./lib/index.js";
 
 const lib = new GestureLibrary().register(new PinkyPointerGesture());
 lib.on("pinky-pointer", ({ x, y }) => moveCursor(x, y));
@@ -282,7 +282,7 @@ src/
       zones.js                  remapToZone, clampRemap01
       hysteresis.js             Hysteresis (Schmitt-Trigger gegen Flackern an einer Schwelle)
     adapters/
-      mediapipe-source.js       Optionaler MediaPipe-Adapter (Kamera + Modelle + Frame-Loop + Auto-Belichtungskorrektur), DOM-Abhängigkeit bewusst isoliert vom Kern
+      mediapipe-source.js       Optionaler MediaPipe-Adapter (Kamera + Modelle + Frame-Loop + Auto-Belichtungskorrektur), DOM-Abhängigkeit in eigener Datei, aber über lib/index.js re-exportiert
   index.html                     Reine Handdaten-Ansicht (Landmarks, keine Anwendung)
   scripts/
     gesture-recognition.js       Landmark-Visualisierung für index.html

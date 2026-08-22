@@ -16,7 +16,7 @@ Ziel: Duplikate entfernen, Kopplung Library↔App reduzieren, robuster machen
 * **Hand-Auswahl dedupliziert** — `selectHands()`/`mirrorHandedness()` (`lib/utils/hands.js`) ersetzen dreifach duplizierten Code in den Hand-Gesten.
 * **Visibility-Check dedupliziert** — `visible()` in `utils.js`, ersetzt duplizierte Closures in den drei Pose-Gesten.
 * **Zonen-Remapping dedupliziert** — `remapToZone()`/`clampRemap01()` (`lib/utils/zones.js`).
-* **MediaPipeSource-Adapter** (`lib/adapters/mediapipe-source.js`) kapselt Kamera-/Modell-Boilerplate — bewusst *nicht* über `lib/index.js` exportiert, damit der Kern DOM-frei bleibt.
+* **MediaPipeSource-Adapter** (`lib/adapters/mediapipe-source.js`) kapselt Kamera-/Modell-Boilerplate. Ursprünglich bewusst *nicht* über `lib/index.js` exportiert, damit der Kern DOM-frei bleibt und ein Import von `lib/index.js` keine Netzwerk-Abhängigkeit zur MediaPipe-CDN erzwingt. Später revidiert (siehe "Revision" unten) zugunsten von "Anwendung nutzt die Library ausschließlich über die öffentliche API". Der Adapter wird jetzt mit-exportiert, die DOM-/Netzwerk-Abhängigkeit hängt dadurch transitiv an jedem Import von `lib/index.js`.
 * **Fehlerisolation** — `gesture.detect()` läuft pro Geste in try/catch; eine werfende Geste reißt nicht mehr alle anderen mit.
 * **Hysterese** (`lib/utils/hysteresis.js`, Schmitt-Trigger) gegen Flackern an Distanz-Schwellen. Hold-Gesten resetteten vorher bei jedem Grenzwert-Zittern komplett neu.
 
@@ -64,5 +64,11 @@ Struktur: `index.html`, `styles.css`, `main.js` (zwei komplett getrennte `Gestur
 ### Auswirkungen (kumuliert)
 
 * **Neue öffentliche Exporte (Library):** `TiltGesture` (Kipp-Geste), `FingerCountGesture` (zählt gestreckte Finger einer Hand), `angle2D` (Rechen-Hilfsfunktion), `clampRemap01` (Rechen-Hilfsfunktion), `fingerExtendedRadial` (Finger-Streckungs-Prüfung), `thumbExtended` (Finger-Streckungs-Prüfung).
-* **`MediaPipeSource`:** neue Optionen `targetBrightness`/`contrast` (Auto-Belichtungskorrektur) und `debugCanvas`-Getter. DOM-Abhängigkeit weiterhin isoliert vom Kern, keine Breaking Changes an bestehender API.
+* **`MediaPipeSource`:** neue Optionen `targetBrightness`/`contrast` (Auto-Belichtungskorrektur) und `debugCanvas`-Getter, keine Breaking Changes an bestehender API.
 * Keine Breaking Changes an den schon vorhandenen Gesten.
+
+### Revision: MediaPipeSource jetzt über `lib/index.js` exportiert
+
+Beim Abgleich gegen die Issue-Checkliste fiel auf: `src/app/main.js` importierte `MediaPipeSource` direkt aus `lib/adapters/mediapipe-source.js`, an `lib/index.js` vorbei. Ein Verstoß gegen "Anwendung nutzt die Library ausschließlich über die öffentliche API" (siehe auch [ADR 004](./004-gesture-demo.md), das genau das als öffentliche API definiert).
+
+`MediaPipeSource` wird jetzt zusätzlich aus `lib/index.js` re-exportiert (`main.js` importiert entsprechend nur noch von dort). Der ursprüngliche Grund für die Trennung (Kern soll DOM-frei bleiben, kein erzwungener Netzwerk-Import der MediaPipe-CDN) bleibt als Nachteil bestehen und wird bewusst in Kauf genommen.

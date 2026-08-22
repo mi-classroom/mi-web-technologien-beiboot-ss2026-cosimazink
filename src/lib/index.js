@@ -17,3 +17,8 @@ export { dist2D, fingerExtended, fingerExtendedRadial, thumbExtended, visible, a
 export { selectHands, mirrorHandedness }                              from "./utils/hands.js";
 export { remapToZone, clampRemap01 }                                  from "./utils/zones.js";
 export { Hysteresis }                                                 from "./utils/hysteresis.js";
+
+// Optional adapter — pulls in a DOM/network dependency (camera, MediaPipe
+// CDN) as soon as it's imported. Still re-exported here so every consumer
+// goes through this one entry point; see ADR 005 for the trade-off.
+export { MediaPipeSource } from "./adapters/mediapipe-source.js";

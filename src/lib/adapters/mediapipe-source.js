@@ -1,10 +1,9 @@
 // Optional adapter: wraps MediaPipe model loading, camera access, and the
 // video frame loop so an app doesn't have to hand-roll it to use the library.
-// Not exported from lib/index.js on purpose: the core library has no DOM
-// dependency, this adapter does (getUserMedia, <video>, rAF).
-//
-// Import it explicitly if you want it:
-//   import { MediaPipeSource } from "../lib/adapters/mediapipe-source.js";
+// Has a DOM/network dependency the core library doesn't (getUserMedia,
+// <video>, rAF, MediaPipe CDN) — lives in its own file for that reason, but
+// is re-exported from lib/index.js like everything else (see ADR 005):
+//   import { GestureLibrary, MediaPipeSource } from "../lib/index.js";
 //   const source = new MediaPipeSource({ hands: true, pose: false });
 //   source.on("frame", (input, ts) => lib.detect(input, ts));
 //   await source.start(videoEl);

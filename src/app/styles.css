@@ -2,8 +2,8 @@
 
 body {
   font-family: system-ui, sans-serif;
-  background: #111;
-  color: #eee;
+  background: #fffefb;
+  color: #0f0e0e;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -12,28 +12,51 @@ body {
   min-height: 100vh;
 }
 
-h1 { font-size: 1rem; font-weight: 600; color: #f90; }
-p.hint { font-size: 0.8rem; color: #999; text-align: center; max-width: 30rem; }
+h1 { font-size: 4rem; font-weight: 700; color: #0f0e0e; }
+h2 { font-size: 1.5rem; font-weight: 700; color: #0f0e0e; }
+p.hint {
+  font-size: 1rem;
+  color: #747474;
+  max-width: 30rem;
+  text-align: left;
+  min-height: 9.5rem; /* fest auf die Höhe der längeren Variante (Tones-Hinweis), damit der Moduswechsel nichts verschiebt */
+}
+
+.layout {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 2rem;
+}
+
+.info-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.75rem;
+  text-align: left;
+  width: 27rem; 
+}
 
 #mode-switch { display: flex; gap: 0.5rem; }
 #mode-switch button {
   font: inherit;
-  font-size: 0.85rem;
+  font-size: 1rem;
   padding: 0.5rem 1rem;
+  margin-bottom: 1rem;
   border: 1px solid #333;
   border-radius: 4px;
   background: #1a1a1a;
-  color: #999;
+  color: #989898;
   cursor: pointer;
 }
 body[data-mode="tones"] #mode-tones,
 body[data-mode="chords"] #mode-chords {
-  background: #f90;
-  border-color: #f90;
+  background: rgb(126, 163, 238);
+  border-color: rgb(126, 163, 238);
   color: #111;
 }
 
-/* Nur die Elemente des aktiven Modus anzeigen */
 body[data-mode="tones"] .chords-only,
 body[data-mode="chords"] .tones-only {
   display: none;
@@ -41,10 +64,9 @@ body[data-mode="chords"] .tones-only {
 
 #camera {
   position: relative;
-  width: 480px;
+  width: 800px;
   max-width: 90vw;
   aspect-ratio: 4/3;
-  border: 1px solid #333;
   border-radius: 6px;
   overflow: hidden;
   background: #000;
@@ -59,12 +81,13 @@ body[data-mode="chords"] .tones-only {
 #register {
   font-family: monospace;
   font-size: 1.1rem;
-  color: #f90;
+  color: rgb(126, 163, 238);
+  min-height: 1.3rem; /* sonst kollabiert die Box auf 0, solange der Inhalt nur ein Leerzeichen ist */
 }
 #note {
   font-family: monospace;
   font-size: 2rem;
-  color: #f90;
+  color: rgb(126, 163, 238);
   min-height: 2.5rem;
 }
 #tone-state {
@@ -75,13 +98,13 @@ body[data-mode="chords"] .tones-only {
 #chord {
   font-family: monospace;
   font-size: 2rem;
-  color: #f90;
+  color: rgb(126, 163, 238);
   min-height: 2.5rem;
 }
 #filter-value {
   font-family: monospace;
   font-size: 1.1rem;
-  color: #f90;
+  color: #747474;
 }
 #chord-state {
   font-family: monospace;
@@ -92,17 +115,18 @@ body[data-mode="chords"] .tones-only {
   font: inherit;
   font-size: 0.75rem;
   padding: 0.4rem 0.8rem;
-  border: 1px solid #333;
+  border: 1px solid #b7b7b7;
   border-radius: 4px;
-  background: #1a1a1a;
-  color: #999;
+  background: #b7b7b7;
+  color: #0f0e0e;
   cursor: pointer;
 }
 #toggle-debug-canvas:disabled { opacity: 0.4; cursor: default; }
 
 #debug-canvas-wrapper {
   display: none;
-  border: 1px solid #333;
+  width: 160px;
+  aspect-ratio: 4/3;
   border-radius: 4px;
   overflow: hidden;
 }
@@ -111,15 +135,30 @@ body[data-mode="chords"] .tones-only {
   display: block;
   width: 160px;
   height: auto;
-  transform: scaleX(-1); /* gleiche Spiegelung wie die Haupt-Vorschau, nur zur Orientierung */
+  transform: scaleX(-1);
 }
 
 #status { font-family: monospace; font-size: 0.75rem; color: #999; }
-#unlock-hint { font-size: 0.75rem; color: #f90; }
+#unlock-hint {
+  font-size: 1.5rem;
+  font-weight: 650;
+  color: rgb(126, 163, 238);
+}
 #debug {
   font-family: monospace;
   font-size: 0.75rem;
-  color: #6cf;
+  font-weight: 500;
+  color: rgb(126, 163, 238);
   white-space: pre-wrap;
   text-align: left;
+  width: 100%;
+  height: 6em;
+  overflow-y: auto; 
+}
+
+.footer {
+  width: 100%;       /* oder ganz weglassen, hr ist standardmäßig schon 100% breit */
+  border: none;      /* Browser-Default-Rahmen entfernen */
+  border-top: 1px solid #ccc;
+  margin: 1rem 0;
 }

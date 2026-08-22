@@ -3,51 +3,62 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Music App — 6 Register</title>
+  <title>Music App</title>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
   <link rel="stylesheet" href="/app/styles.css" />
 </head>
 <body data-mode="tones">
 
-  <h1>Gesten-Instrument</h1>
+  <h1>MUSIC</h1>
 
   <div id="mode-switch">
-    <button id="mode-tones">Töne (Subbass–Höhen)</button>
-    <button id="mode-chords">Akkorde</button>
+    <button id="mode-tones">Frequencies (sub-bass to treble)</button>
+    <button id="mode-chords">Chords</button>
   </div>
 
-  <p class="hint tones-only">
-    6 Register per Fingerform (linke Hand):
-    Zeigefinger = Sub-Bass · +Mittel = Bass · +Ring = Tiefmitten · +Klein = Mitten · +Daumen (offene Hand) = Hochmitten · Zeige+Klein = Höhen.
-    Jeweils langsam kippen (Handgelenk drehen), um innerhalb des Registers zu gleiten. Ton läuft, solange eine der Formen gezeigt wird.
-  </p>
-  <p class="hint chords-only">
-    Dur-/Moll-Akkorde in A-Dur, rechte Hand wählt per Fingeranzahl die Stufe
-    (1 Finger = I, 2 = ii, 3 = iii, 4 = IV, 5 = V). Linke Hand offen halten und
-    kippen, um die Klangfarbe (Filter) zu steuern. Ton läuft, solange die
-    rechte Hand eine Stufe zeigt.
-  </p>
+  <div class="layout">
+    <div id="camera">
+      <video id="video" autoplay playsinline muted></video>
+      <canvas id="canvas"></canvas>
+    </div>
 
-  <p id="unlock-hint">Einmal irgendwo klicken, um Audio zu aktivieren (Browser-Vorgabe, nicht umgehbar).</p>
+    <div class="info-panel">
+      <p id="unlock-hint">Click one time to start MUSIC</p>
 
-  <div id="camera">
-    <video id="video" autoplay playsinline muted></video>
-    <canvas id="canvas"></canvas>
+      <h2>HOW TO PLAY</h2>
+      <p class="hint tones-only">
+        Six registers per finger shape: <br>
+        Index finger = sub-bass <br>
+        + Middle finger = bass <br>
+        + Ring finger = low-midrange <br>
+        + Little finger = midrange <br>
+        + Thumb (open hand) = high-midrange <br>
+        Index + Little finger = treble<br>
+        Tilt slowly to glide within each register.
+      </p>
+      <p class="hint chords-only">
+        Major/minor chords in A major <br>
+        the right hand selects the degree using the number of fingers <br>
+        (1 finger = I, 2 = ii, 3 = iii, 4 = IV, 5 = V) <br>
+        Keep the left hand open and tilt it to control the timbre (filter). The note continues to sound as long as the
+        right hand indicates a degree.
+      </p>
+
+      <div id="register" class="tones-only"> </div>
+      <div id="note" class="tones-only"> </div>
+      <div id="tone-state" class="tones-only">Sound off</div>
+
+      <div id="chord" class="chords-only"> </div>
+      <div id="filter-value" class="chords-only">Filter: </div>
+      <div id="chord-state" class="chords-only">Sound off</div>
+
+      <button id="toggle-debug-canvas" disabled>Show exposure compensation</button>
+      <div id="debug-canvas-wrapper"></div>
+
+      <div id="status">Loading…</div>
+      <pre id="debug">–</pre>
+    </div>
   </div>
-
-  <div id="register" class="tones-only">–</div>
-  <div id="note" class="tones-only">–</div>
-  <div id="tone-state" class="tones-only">Ton inaktiv</div>
-
-  <div id="chord" class="chords-only">–</div>
-  <div id="filter-value" class="chords-only">Filter: –</div>
-  <div id="chord-state" class="chords-only">Ton inaktiv</div>
-
-  <button id="toggle-debug-canvas" disabled>Belichtungskorrektur einblenden</button>
-  <div id="debug-canvas-wrapper"></div>
-
-  <div id="status">Lade…</div>
-  <pre id="debug">–</pre>
 
   <script type="module" src="/app/main.js"></script>
 </body>
