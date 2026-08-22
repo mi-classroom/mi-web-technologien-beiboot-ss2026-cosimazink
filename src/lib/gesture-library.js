@@ -14,7 +14,10 @@ export class GestureLibrary {
     return this;
   }
 
-  // Comparable to addEventListener, removeEventListener
+  // Subscribe to a gesture event.
+  // "gesture-name"         fires on every non-null result
+  // "gesture-name:action"  fires only when that specific action occurs
+  // "gesture-name:idle"    fires once when a previously active gesture becomes inactive
   on(event, callback) {
     if (!this.#listeners.has(event)) this.#listeners.set(event, new Set());
     this.#listeners.get(event).add(callback);
