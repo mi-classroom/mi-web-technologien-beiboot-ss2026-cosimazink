@@ -2,6 +2,10 @@
 
 - [Informationen zum Projekt](https://github.com/mi-classroom/mi-web-technologien-beiboot-ss2026-cosimazink/blob/main/PROJECT.md)
 
+Browserbasierte Library, die Handgesten aus der Kamera per MediaPipe erkennt und als einfache Events bereitstellt, sowie eine darauf aufbauende Anwendung: ein gestengesteuertes Instrument (kontinuierlicher Ton per Fingerform + Kippen, oder Dur-/Moll-Akkorde per Fingeranzahl + Filter). Siehe [ADR 005](./adr/005-application.md) für die Begründung, warum diese Anwendung so gebaut wurde.
+
+**Live-Demo:** https://mi-classroom.github.io/mi-web-technologien-beiboot-ss2026-cosimazink/app/
+
 ## Architecture Decision Records
 
 - [ADR 001 – ML-Library Choice](./adr/001-ml-library-choice.md)
@@ -9,6 +13,12 @@
 - [ADR 003 – Gesture Library API Design](./adr/003-gesture-library-api.md)
 - [ADR 004 – Gesture Library API Design](./adr/004-gesture-demo.md)
 - [ADR 005 – Library-Cleanup & Musik-App: erste Gesten](./adr/005-application.md)
+
+## Voraussetzungen
+
+- **Node.js** (nur für `npx`, um lokal einen Static-File-Server zu starten — die Anwendung selbst hat keine Node-Abhängigkeiten, kein `npm install`, kein Build-Schritt, kein `package.json`). Jede halbwegs aktuelle Node-Version reicht (getestet mit Node 18+).
+- **Ein moderner Browser** mit Kamera-Zugriff und WebGL-Unterstützung (Chrome/Edge empfohlen — MediaPipe Tasks Vision läuft über WASM + optionalem GPU-Delegate).
+- Sonst nichts weiter: die gesamte Library und Anwendung ist reines ES-Module-JavaScript, MediaPipe wird direkt von einer CDN geladen (`jsdelivr.net`).
 
 ## Lokal starten
 
@@ -20,6 +30,17 @@ npx serve src
 → [http://localhost:3000/app/](http://localhost:3000/app/) – Musik-Anwendung (siehe [ADR 005, Teil B](./adr/005-application.md))
 
 > Kein Build-Schritt nötig. Die Anwendung läuft vollständig im Browser via MediaPipe Web SDK.
+
+## Deployment
+
+Läuft komplett client-seitig (kein Server-Code, kein Build-Schritt) und lässt sich deshalb 1:1 als statische Seite deployen. Deployt über **GitHub Pages** via GitHub Actions ([.github/workflows/deploy-pages.yml](.github/workflows/deploy-pages.yml)): Bei jedem Push auf `main` wird der Inhalt von `src/` automatisch als Pages-Artefakt hochgeladen und veröffentlicht, kein manueller Schritt nötig.
+
+**Selbst deployen (Fork/eigenes Repo):**
+1. In den Repo-Einstellungen unter *Settings → Pages* als Quelle **„GitHub Actions"** auswählen.
+2. Bei Push auf `main` läuft der Workflow automatisch und veröffentlicht `src/` unter `https://<username>.github.io/<repo-name>/`.
+3. Kein Build, keine Secrets, keine weitere Konfiguration nötig.
+
+> Wichtig: Pfade in `src/app/index.html` und `src/index.html` sind bewusst *relativ* (nicht `/app/styles.css`, sondern `styles.css`), damit sie unter einem GitHub-Pages-Projekt-Unterpfad (`.../<repo-name>/...`) funktionieren. Lokal deshalb immer mit abschließendem Slash aufrufen (`localhost:3000/app/`, nicht `/app`), sonst löst der Browser die relativen Pfade falsch auf.
 
 ---
 

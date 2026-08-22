@@ -9,6 +9,16 @@
 
 Vor dem Bau der Musik-App wurde die Library aufgeräumt (Teil A), danach die ersten Gesten der App selbst entwickelt (Teil B). Mehrfach durch Live-Tests iteriert. Die wichtigsten Learnings daraus stehen unten unter "Gelernt".
 
+## Entscheidung: Weg A (Vision-Anwendung)
+
+Issue #7 stellt zur Wahl: Weg A (Vision-Anwendung: zeigen, was mit der Library möglich ist, wenn man Zeit reinsteckt) oder Weg B (Vertiefung: eine konkrete Schwachstelle aus Issue #4 sauber lösen).
+
+**Entscheidung: Weg A.**
+
+**Warum:** Issue #4 (Shop-Demo) hatte gezeigt, dass die Library als API funktioniert, aber noch nicht, wofür sich der Aufwand lohnt. Ziel von Weg A ist genau das: an einem echten, in sich stimmigen Anwendungsfall zeigen, wie man mit der Library überhaupt eine Anwendung aufbaut. Von der Gesten-Registrierung über die Event-Verdrahtung bis zur eigentlichen App-Logik (hier: ein gestengesteuertes Instrument) und dabei praktisch demonstrieren, was mit vergleichsweise wenig Code möglich ist. Interessenten, die die Library evaluieren, sehen an einem funktionierenden Instrument in Sekunden, wofür sie taugt; das war mit der Wahl wichtiger als eine isolierte technische Optimierung. Eine Vision-Anwendung ist damit auch das bessere Vorzeigestück.
+
+**Alternative (Weg B) — warum nicht:** Vertiefung an einer konkreten Schwachstelle (z. B. Robustheit bei schlechten Lichtverhältnissen) wäre die technisch "sauberere", enger fokussierte Wahl gewesen. Am Ende ist ein Stück davon trotzdem passiert: die Auto-Belichtungskorrektur in `MediaPipeSource` (siehe "Gelernt" unten) ist im Kern eine Weg-B-artige Vertiefung, motiviert durch ein echtes Robustheitsproblem, das erst beim Live-Testen der Musik-App auffiel. Der Unterschied: Hier ist sie Mittel zum Zweck innerhalb der Vision-Anwendung, nicht das Hauptprojekt selbst.
+
 ## Teil A — Library-Cleanup
 
 Ziel: Duplikate entfernen, Kopplung Library↔App reduzieren, robuster machen
@@ -72,3 +82,9 @@ Struktur: `index.html`, `styles.css`, `main.js` (zwei komplett getrennte `Gestur
 Beim Abgleich gegen die Issue-Checkliste fiel auf: `src/app/main.js` importierte `MediaPipeSource` direkt aus `lib/adapters/mediapipe-source.js`, an `lib/index.js` vorbei. Ein Verstoß gegen "Anwendung nutzt die Library ausschließlich über die öffentliche API" (siehe auch [ADR 004](./004-gesture-demo.md), das genau das als öffentliche API definiert).
 
 `MediaPipeSource` wird jetzt zusätzlich aus `lib/index.js` re-exportiert (`main.js` importiert entsprechend nur noch von dort). Der ursprüngliche Grund für die Trennung (Kern soll DOM-frei bleiben, kein erzwungener Netzwerk-Import der MediaPipe-CDN) bleibt als Nachteil bestehen und wird bewusst in Kauf genommen.
+
+## Reflexion
+
+**Was macht diese Anwendung besonders:** Kein einzelner Sound-Regler, sondern zwei bewusst unterschiedliche Interaktionsideen auf derselben Gesten-Mechanik (`TiltGesture`): ein freier, kontinuierlicher Ton fürs "Erspüren" von Tonhöhe (Theremin-artig) in Modus 1, und ein zweiter Modus, der dieselbe Handgeste komplett umwidmet: vom Frequenz-Regler zum Klangfarbe-Regler für feste Akkorde. Beide Modi teilen sich Bibliothek und Gesten-Erkennung, sogar dieselbe Fingerform, unterscheiden sich aber komplett darin, was sie musikalisch bedeuten.
+
+**Größte Herausforderung:** Die zuverlässige Erkennung der Gesten: das zieht sich durch praktisch das ganze Projekt und wurde erst durch wiederholtes Live-Testen sichtbar. Mehrere unabhängige Probleme mussten gelöst werden, bevor sich eine Geste überhaupt verlässlich anfühlte: ein einfacher Y-Höhenvergleich für "Finger gestreckt" bricht bei gedrehter Hand (`fingerExtendedRadial()` als rotationsunabhängige Alternative), der Daumen verhält sich anatomisch anders als die anderen vier Finger und braucht eine eigene Prüfung (`thumbExtended()`), Zustände an einer Schwelle flackern ohne Hysterese, und zuletzt die Erkenntnis, dass selbst die Kamera-Belichtung selbst zum Problem wird: bei hellem Hintergrund wird die Hand im Vordergrund zu dunkel für zuverlässiges Tracking, gelöst durch eine automatische, geglättete Belichtungskorrektur in MediaPipeSource. Keines dieser Probleme ist für sich groß, aber zusammen zeigen sie: der schwierige Teil an gestenbasierter Interaktion ist nicht das Konzept, sondern dass die Erkennung unter echten, unkontrollierten Bedingungen (Beleuchtung, Handhaltung, Kamera-Qualität) robust bleibt.
