@@ -14,51 +14,59 @@ import {
   FilesetResolver,
 } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/vision_bundle.mjs";
 
-const VISION_WASM_URL = "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm";
+const VISION_WASM_URL =
+  "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm";
 
 const MODEL_URLS = {
-  hands: "https://storage.googleapis.com/mediapipe-models/gesture_recognizer/gesture_recognizer/float16/1/gesture_recognizer.task",
-  pose:  "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task",
+  hands:
+    "https://storage.googleapis.com/mediapipe-models/gesture_recognizer/gesture_recognizer/float16/1/gesture_recognizer.task",
+  pose: "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task",
 };
 
 // Auto-exposure for detection (not the visible preview): the maximum
 // correction per measurement, the frequency of measurements, and the
 // limits to ensure that an almost black image (e.g. the camera is briefly obscured) does not
 // result in an absurdly high gain.
-const TARGET_LUMA           = 130;  // Target value for average brightness, 0–255
-const BRIGHTNESS_MIN        = 0.7;
-const BRIGHTNESS_MAX        = 2.2;
-const BRIGHTNESS_SMOOTHING  = 0.15; // Proportion by which the factor approaches the target per measurement
-const SAMPLE_EVERY_N_FRAMES = 10;   // Brightness changes slowly, don't measure every frame
-const SAMPLE_SIZE           = { width: 16, height: 12 }; // Tiny, sufficient for the average
+const TARGET_LUMA = 130; // Target value for average brightness, 0–255
+const BRIGHTNESS_MIN = 0.7;
+const BRIGHTNESS_MAX = 2.2;
+const BRIGHTNESS_SMOOTHING = 0.15; // Proportion by which the factor approaches the target per measurement
+const SAMPLE_EVERY_N_FRAMES = 10; // Brightness changes slowly, don't measure every frame
+const SAMPLE_SIZE = { width: 16, height: 12 }; // Tiny, sufficient for the average
 
 function clamp(value, min, max) {
   return Math.max(min, Math.min(max, value));
 }
 
 export class MediaPipeSource {
-  #handRecognizer  = null;
-  #poseRecognizer  = null;
-  #video           = null;
-  #listeners       = new Map();
-  #lastVideoTime   = -1;
-  #running         = false;
-  #procCanvas      = null; // offscreen, exposure-corrected copy of the frame
-  #procCtx         = null;
-  #sampleCanvas    = null; // tiny downscale only for brightness measurement
-  #sampleCtx       = null;
-  #brightness      = 1;    // current, smoothed correction factor
-  #frameCount      = 0;
+  #handRecognizer = null;
+  #poseRecognizer = null;
+  #video = null;
+  #listeners = new Map();
+  #lastVideoTime = -1;
+  #running = false;
+  #procCanvas = null; // offscreen, exposure-corrected copy of the frame
+  #procCtx = null;
+  #sampleCanvas = null; // tiny downscale only for brightness measurement
+  #sampleCtx = null;
+  #brightness = 1; // current, smoothed correction factor
+  #frameCount = 0;
 
   // { hands, pose }: which models to load. { delegate }: "GPU" | "CPU".
   // { targetBrightness, contrast }: Detection runs on an automatically
   // exposure-corrected copy of the frame, not the raw video, visible <video> preview remains unchanged
-  constructor({ hands = true, pose = false, delegate = "GPU", targetBrightness = TARGET_LUMA, contrast = 1.15 } = {}) {
-    this._wantHands        = hands;
-    this._wantPose         = pose;
-    this._delegate         = delegate;
+  constructor({
+    hands = true,
+    pose = false,
+    delegate = "GPU",
+    targetBrightness = TARGET_LUMA,
+    contrast = 1.15,
+  } = {}) {
+    this._wantHands = hands;
+    this._wantPose = pose;
+    this._delegate = delegate;
     this._targetBrightness = targetBrightness;
-    this._contrast         = contrast;
+    this._contrast = contrast;
   }
 
   // Registers a callback for an event. Currently only "frame" is supported.
@@ -92,19 +100,29 @@ export class MediaPipeSource {
     if (this._wantHands) {
       loads.push(
         GestureRecognizer.createFromOptions(vision, {
-          baseOptions: { modelAssetPath: MODEL_URLS.hands, delegate: this._delegate },
+          baseOptions: {
+            modelAssetPath: MODEL_URLS.hands,
+            delegate: this._delegate,
+          },
           runningMode: "VIDEO",
           numHands: 2,
-        }).then((r) => { this.#handRecognizer = r; })
+        }).then((r) => {
+          this.#handRecognizer = r;
+        }),
       );
     }
     if (this._wantPose) {
       loads.push(
         PoseLandmarker.createFromOptions(vision, {
-          baseOptions: { modelAssetPath: MODEL_URLS.pose, delegate: this._delegate },
+          baseOptions: {
+            modelAssetPath: MODEL_URLS.pose,
+            delegate: this._delegate,
+          },
           runningMode: "VIDEO",
           numPoses: 1,
-        }).then((r) => { this.#poseRecognizer = r; })
+        }).then((r) => {
+          this.#poseRecognizer = r;
+        }),
       );
     }
     await Promise.all(loads);
@@ -113,17 +131,21 @@ export class MediaPipeSource {
       video: { width: 640, height: 480, facingMode: "user" },
     });
     video.srcObject = stream;
-    await new Promise((resolve) => video.addEventListener("loadeddata", resolve, { once: true }));
+    await new Promise((resolve) =>
+      video.addEventListener("loadeddata", resolve, { once: true }),
+    );
 
     this.#procCanvas = document.createElement("canvas");
-    this.#procCanvas.width  = video.videoWidth;
+    this.#procCanvas.width = video.videoWidth;
     this.#procCanvas.height = video.videoHeight;
     this.#procCtx = this.#procCanvas.getContext("2d");
 
     this.#sampleCanvas = document.createElement("canvas");
-    this.#sampleCanvas.width  = SAMPLE_SIZE.width;
+    this.#sampleCanvas.width = SAMPLE_SIZE.width;
     this.#sampleCanvas.height = SAMPLE_SIZE.height;
-    this.#sampleCtx = this.#sampleCanvas.getContext("2d", { willReadFrequently: true });
+    this.#sampleCtx = this.#sampleCanvas.getContext("2d", {
+      willReadFrequently: true,
+    });
 
     this.#running = true;
     requestAnimationFrame(() => this.#loop());
@@ -146,16 +168,26 @@ export class MediaPipeSource {
     this.#lastVideoTime = video.currentTime;
 
     this.#frameCount++;
-    if (this.#frameCount % SAMPLE_EVERY_N_FRAMES === 0) this.#updateBrightness();
+    if (this.#frameCount % SAMPLE_EVERY_N_FRAMES === 0)
+      this.#updateBrightness();
 
     this.#procCtx.filter = `brightness(${this.#brightness.toFixed(2)}) contrast(${this._contrast})`;
-    this.#procCtx.drawImage(video, 0, 0, this.#procCanvas.width, this.#procCanvas.height);
+    this.#procCtx.drawImage(
+      video,
+      0,
+      0,
+      this.#procCanvas.width,
+      this.#procCanvas.height,
+    );
 
     const ts = performance.now();
-    const handResults = this.#handRecognizer?.recognizeForVideo(this.#procCanvas, ts) ?? null;
+    const handResults =
+      this.#handRecognizer?.recognizeForVideo(this.#procCanvas, ts) ?? null;
     let poseResults = null;
     if (this.#poseRecognizer) {
-      try { poseResults = this.#poseRecognizer.detectForVideo(this.#procCanvas, ts); } catch (_) {}
+      try {
+        poseResults = this.#poseRecognizer.detectForVideo(this.#procCanvas, ts);
+      } catch (_) {}
     }
 
     this.#emit("frame", { handResults, poseResults }, ts);
@@ -177,14 +209,23 @@ export class MediaPipeSource {
     }
     const avgLuma = sum / (data.length / 4);
 
-    const targetFactor = clamp(this._targetBrightness / Math.max(avgLuma, 1), BRIGHTNESS_MIN, BRIGHTNESS_MAX);
-    this.#brightness += (targetFactor - this.#brightness) * BRIGHTNESS_SMOOTHING;
+    const targetFactor = clamp(
+      this._targetBrightness / Math.max(avgLuma, 1),
+      BRIGHTNESS_MIN,
+      BRIGHTNESS_MAX,
+    );
+    this.#brightness +=
+      (targetFactor - this.#brightness) * BRIGHTNESS_SMOOTHING;
   }
 
   // Emits an event to all registered listeners, catching and logging any errors.
   #emit(event, input, ts) {
     for (const cb of this.#listeners.get(event) ?? []) {
-      try { cb(input, ts); } catch (e) { console.error(`MediaPipeSource: error in "${event}" handler`, e); }
+      try {
+        cb(input, ts);
+      } catch (e) {
+        console.error(`MediaPipeSource: error in "${event}" handler`, e);
+      }
     }
   }
 }

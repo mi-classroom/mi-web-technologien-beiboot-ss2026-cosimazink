@@ -3,23 +3,27 @@
 // Position is smoothed with a OneEuroFilter — the filter resets whenever the
 // gesture drops out so it snaps to the new spot instead of lagging behind.
 
-import { BaseGesture }         from "../gesture-base.js";
+import { BaseGesture } from "../gesture-base.js";
 import { fingerExtendedRadial } from "../utils/utils.js";
-import { selectHands }         from "../utils/hands.js";
-import { remapToZone }    from "../utils/zones.js";
-import { OneEuroFilter }  from "../utils/one-euro-filter.js";
+import { selectHands } from "../utils/hands.js";
+import { remapToZone } from "../utils/zones.js";
+import { OneEuroFilter } from "../utils/one-euro-filter.js";
 
 const DEFAULTS = {
   confidenceMin: 0.7,
   zoneX: [0.15, 0.85], // active region of the camera frame (normalised)
-  zoneY: [0.10, 0.90],
-  minCutoff: 1.0,      // OneEuroFilter: lower = smoother at rest
-  beta:      0.05,     // OneEuroFilter: higher = less lag during fast movement
+  zoneY: [0.1, 0.9],
+  minCutoff: 1.0, // OneEuroFilter: lower = smoother at rest
+  beta: 0.05, // OneEuroFilter: higher = less lag during fast movement
 };
 
 export class PinkyPointerGesture extends BaseGesture {
-  get name()          { return "pinky-pointer"; }
-  get requiredInput() { return "hands"; }
+  get name() {
+    return "pinky-pointer";
+  }
+  get requiredInput() {
+    return "hands";
+  }
 
   constructor(options = {}) {
     super();
@@ -36,11 +40,12 @@ export class PinkyPointerGesture extends BaseGesture {
       if (!lm) continue;
 
       const pinkyExtended = fingerExtendedRadial(lm, 20, 18);
-      const indexCurled   = !fingerExtendedRadial(lm, 8,  6);
-      const middleCurled  = !fingerExtendedRadial(lm, 12, 10);
-      const ringCurled    = !fingerExtendedRadial(lm, 16, 14);
+      const indexCurled = !fingerExtendedRadial(lm, 8, 6);
+      const middleCurled = !fingerExtendedRadial(lm, 12, 10);
+      const ringCurled = !fingerExtendedRadial(lm, 16, 14);
 
-      if (!(pinkyExtended && indexCurled && middleCurled && ringCurled)) continue;
+      if (!(pinkyExtended && indexCurled && middleCurled && ringCurled))
+        continue;
 
       const { x, y } = remapToZone(lm[20].x, lm[20].y, zoneX, zoneY);
       return {

@@ -13,30 +13,40 @@
 // finger is aimed, which barely changes during a wrist roll (the rotation
 // axis is roughly aligned with it) — see ADR 005, Teil B, Nachtrag 1.
 
-import { BaseGesture }                                     from "../gesture-base.js";
-import { fingerExtendedRadial, thumbExtended, angle2D }     from "../utils/utils.js";
-import { selectHands }                                      from "../utils/hands.js";
-import { clampRemap01 }                                     from "../utils/zones.js";
-import { OneEuroFilter }                                    from "../utils/one-euro-filter.js";
+import { BaseGesture } from "../gesture-base.js";
+import {
+  fingerExtendedRadial,
+  thumbExtended,
+  angle2D,
+} from "../utils/utils.js";
+import { selectHands } from "../utils/hands.js";
+import { clampRemap01 } from "../utils/zones.js";
+import { OneEuroFilter } from "../utils/one-euro-filter.js";
 
 // [tipIdx, pipIdx] per finger, for fingerExtendedRadial(). Thumb is checked
 // separately via thumbExtended() — see comment there.
 const FINGER_LANDMARKS = {
-  index:  [8, 6],
+  index: [8, 6],
   middle: [12, 10],
-  ring:   [16, 14],
-  pinky:  [20, 18],
+  ring: [16, 14],
+  pinky: [20, 18],
 };
 
 const DEFAULTS = {
   confidenceMin: 0.7,
   angleRange: [-60, 60], // degrees, comfortable wrist-roll range → [0,1] (0° = palm flat toward camera)
   minCutoff: 1.0,
-  beta:      0.05,
+  beta: 0.05,
   hand: "any", // "Left" | "Right" | "any" — restrict to one hand so it doesn't clash with a gesture on the other
-  thumbExtendMin: 0.10, // distance thumb tip → index MCP to count as extended
+  thumbExtendMin: 0.1, // distance thumb tip → index MCP to count as extended
   // Required shape: true = must be extended, false = must be curled. Default: index-only (the original gesture).
-  fingers: { thumb: false, index: true, middle: false, ring: false, pinky: false },
+  fingers: {
+    thumb: false,
+    index: true,
+    middle: false,
+    ring: false,
+    pinky: false,
+  },
 };
 
 export class TiltGesture extends BaseGesture {
@@ -44,7 +54,7 @@ export class TiltGesture extends BaseGesture {
     super();
     if (!options.name) throw new Error("TiltGesture requires a unique `name`");
     this._name = options.name;
-    this._cfg  = {
+    this._cfg = {
       ...DEFAULTS,
       ...options,
       fingers: { ...DEFAULTS.fingers, ...(options.fingers ?? {}) },
@@ -52,27 +62,35 @@ export class TiltGesture extends BaseGesture {
     this._makeFilter();
   }
 
-  get name()          { return this._name; }
-  get requiredInput() { return "hands"; }
+  get name() {
+    return this._name;
+  }
+  get requiredInput() {
+    return "hands";
+  }
 
   detect(handResults, ts) {
-    const { confidenceMin, angleRange, hand, fingers, thumbExtendMin } = this._cfg;
-    const hands  = selectHands(handResults, confidenceMin);
+    const { confidenceMin, angleRange, hand, fingers, thumbExtendMin } =
+      this._cfg;
+    const hands = selectHands(handResults, confidenceMin);
     const labels = hand === "any" ? ["Left", "Right"] : [hand];
 
     for (const label of labels) {
       const lm = hands[label];
       if (!lm) continue;
 
-      const matchesShape = Object.entries(fingers).every(([finger, mustBeExtended]) => {
-        if (finger === "thumb") return thumbExtended(lm, thumbExtendMin) === mustBeExtended;
-        const [tip, pip] = FINGER_LANDMARKS[finger];
-        return fingerExtendedRadial(lm, tip, pip) === mustBeExtended;
-      });
+      const matchesShape = Object.entries(fingers).every(
+        ([finger, mustBeExtended]) => {
+          if (finger === "thumb")
+            return thumbExtended(lm, thumbExtendMin) === mustBeExtended;
+          const [tip, pip] = FINGER_LANDMARKS[finger];
+          return fingerExtendedRadial(lm, tip, pip) === mustBeExtended;
+        },
+      );
       if (!matchesShape) continue;
 
       const angleDeg = this._filter.filter(angle2D(lm[17], lm[5]), ts); // pinky MCP → index MCP
-      const value    = clampRemap01(angleDeg, angleRange[0], angleRange[1]);
+      const value = clampRemap01(angleDeg, angleRange[0], angleRange[1]);
 
       return { state: "tilting", value, angleDeg };
     }

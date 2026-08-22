@@ -3,5 +3,11 @@ export const subBass = {
   id: "subbass",
   label: "Sub-Bass (C2)",
   base: 65.41,
-  fingers: { thumb: false, index: true, middle: false, ring: false, pinky: false },
+  fingers: {
+    thumb: false,
+    index: true,
+    middle: false,
+    ring: false,
+    pinky: false,
+  },
 };

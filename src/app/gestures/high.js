@@ -2,6 +2,12 @@
 export const high = {
   id: "high",
   label: "Höhen (C6)",
-  base: 1046.50,
-  fingers: { thumb: false, index: true, middle: false, ring: false, pinky: true },
+  base: 1046.5,
+  fingers: {
+    thumb: false,
+    index: true,
+    middle: false,
+    ring: false,
+    pinky: true,
+  },
 };

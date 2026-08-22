@@ -14,7 +14,7 @@ export function selectHands(handResults, confidenceMin = 0.7) {
     const score = handResults.handednesses[i]?.[0]?.score ?? 0;
     if (score < confidenceMin) continue;
 
-    const raw   = handResults.handednesses[i][0].displayName;
+    const raw = handResults.handednesses[i][0].displayName;
     const label = mirrorHandedness(raw);
     hands[label] = handResults.landmarks[i];
   }

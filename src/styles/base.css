@@ -1,28 +1,29 @@
 :root {
   /* colors */
-  --grey-lightest:  #f7f7f7;
-  --white:          #ffffff;
-  --grey-light:     #e0e0e0;
-  --grey-mid:       #888888;
-  --grey-dark:      #333333;
-  --grey-darkest:   #1a1a1a;
-  --orange:         #f0a500;
+  --grey-lightest: #f7f7f7;
+  --white: #ffffff;
+  --grey-light: #e0e0e0;
+  --grey-mid: #888888;
+  --grey-dark: #333333;
+  --grey-darkest: #1a1a1a;
+  --orange: #f0a500;
 
   /* spacing */
-  --xs:  4px;
-  --s:   8px;
-  --m:  12px;
-  --l:  16px;
+  --xs: 4px;
+  --s: 8px;
+  --m: 12px;
+  --l: 16px;
   --xl: 24px;
 
   /* font sizes */
-  --text-xs:  10px;
-  --text-s:   11px;
-  --text-m:   12px;
-  --text-l:   14px;
-  --text-xl:  18px;
+  --text-xs: 10px;
+  --text-s: 11px;
+  --text-m: 12px;
+  --text-l: 14px;
+  --text-xl: 18px;
 
-  --font-mono: ui-monospace, "Cascadia Code", "Source Code Pro", Menlo, monospace;
+  --font-mono:
+    ui-monospace, "Cascadia Code", "Source Code Pro", Menlo, monospace;
 }
 
 body {

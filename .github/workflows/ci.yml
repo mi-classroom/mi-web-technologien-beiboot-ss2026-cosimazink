@@ -1,0 +1,66 @@
+name: CI
+
+# Basic checks before every merge into main. Not a build step in the
+# strict sense (the project has no bundler). Instead, a
+# syntax/parse check of all JS files serves as a true equivalent. The
+# ESLint config is only generated here in the workflow; it is not checked into the repository
+# (a deliberate decision: no linter setup for local development).
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Syntax-Check (kein Bundler im Projekt, daher Parse-Check statt Build)
+        run: find src -name "*.js" -print0 | xargs -0 -n1 node --check
+
+      - name: Formatierung (Prettier)
+        run: npx --yes prettier@3 --check "src/**/*.{js,css,html}" "test/**/*.js"
+
+      - name: Tests
+        run: node --test "test/*.test.js"
+
+      - name: Lint (CI-only, Config wird hier erzeugt statt im Repo geführt)
+        run: |
+          cat > eslint.config.js <<'EOF'
+          export default [
+            {
+              files: ["src/**/*.js"],
+              languageOptions: {
+                ecmaVersion: "latest",
+                sourceType: "module",
+                globals: {
+                  window: "readonly",
+                  document: "readonly",
+                  navigator: "readonly",
+                  console: "readonly",
+                  performance: "readonly",
+                  requestAnimationFrame: "readonly",
+                  setTimeout: "readonly",
+                  clearTimeout: "readonly",
+                  AudioContext: "readonly",
+                  webkitAudioContext: "readonly",
+                  Image: "readonly",
+                  history: "readonly",
+                },
+              },
+              rules: {
+                "no-unused-vars": ["warn", { argsIgnorePattern: "^_", caughtErrorsIgnorePattern: "^_" }],
+                "no-undef": "error",
+                "no-var": "error",
+                "prefer-const": "warn",
+                eqeqeq: "warn",
+                "no-console": "off",
+              },
+            },
+          ];
+          EOF
+          npx --yes eslint@9 src

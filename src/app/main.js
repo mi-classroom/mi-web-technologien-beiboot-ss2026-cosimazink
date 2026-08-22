@@ -1,4 +1,13 @@
-import { GestureLibrary, TiltGesture, FingerCountGesture, MediaPipeSource, selectHands, fingerExtendedRadial, thumbExtended, angle2D } from "../lib/index.js";
+import {
+  GestureLibrary,
+  TiltGesture,
+  FingerCountGesture,
+  MediaPipeSource,
+  selectHands,
+  fingerExtendedRadial,
+  thumbExtended,
+  angle2D,
+} from "../lib/index.js";
 import { REGISTERS } from "./gestures/index.js";
 import { CHORDS, chordFrequencies } from "./chords.js";
 
@@ -6,38 +15,39 @@ function freqFromValue(base, value) {
   return base * Math.pow(2, value); // exponential = linear in perceived pitch, one octave per register
 }
 
-const FILTER_MIN = 200;  // Hz — a more muffled sound
+const FILTER_MIN = 200; // Hz — a more muffled sound
 const FILTER_MAX = 8000; // Hz — the brightest sound
 
 function filterFromValue(value) {
   return FILTER_MIN * Math.pow(FILTER_MAX / FILTER_MIN, value); // exponential, as with pitch
 }
 
-const video        = document.getElementById("video");
-const canvas       = document.getElementById("canvas");
-const ctx          = canvas.getContext("2d");
-const registerEl   = document.getElementById("register");
-const noteEl       = document.getElementById("note");
-const toneStateEl  = document.getElementById("tone-state");
-const chordEl      = document.getElementById("chord");
-const filterEl     = document.getElementById("filter-value");
+const video = document.getElementById("video");
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+const registerEl = document.getElementById("register");
+const noteEl = document.getElementById("note");
+const toneStateEl = document.getElementById("tone-state");
+const chordEl = document.getElementById("chord");
+const filterEl = document.getElementById("filter-value");
 const chordStateEl = document.getElementById("chord-state");
-const statusEl     = document.getElementById("status");
-const unlockHint   = document.getElementById("unlock-hint");
-const debugEl      = document.getElementById("debug");
-const modeTonesBtn  = document.getElementById("mode-tones");
+const statusEl = document.getElementById("status");
+const unlockHint = document.getElementById("unlock-hint");
+const debugEl = document.getElementById("debug");
+const modeTonesBtn = document.getElementById("mode-tones");
 const modeChordsBtn = document.getElementById("mode-chords");
-const debugCanvasToggle  = document.getElementById("toggle-debug-canvas");
+const debugCanvasToggle = document.getElementById("toggle-debug-canvas");
 const debugCanvasWrapper = document.getElementById("debug-canvas-wrapper");
 
-let audioCtx, audioReady = false;
+let audioCtx,
+  audioReady = false;
 
 // ── Sound instrument (Button 1) — a continuous sine wave, unmodified ────
 
 let osc, gain;
 
 function initToneInstrument() {
-  osc  = audioCtx.createOscillator();
+  osc = audioCtx.createOscillator();
   gain = audioCtx.createGain();
   gain.gain.value = 0; // starts silent
   osc.type = "sine";
@@ -65,7 +75,9 @@ function setToneAudible(audible) {
 // ── Chord instrument (Button 2) — 3 sawtooth voices through a
 // ── shared low-pass filter, completely separate from the melody instrument above
 
-let chordOscs = [], chordFilter, chordGain;
+let chordOscs = [],
+  chordFilter,
+  chordGain;
 
 function initChordInstrument() {
   chordFilter = audioCtx.createBiquadFilter();
@@ -101,13 +113,21 @@ function setChord(degree) {
 
 function setChordFilterValue(value) {
   if (!audioReady) return;
-  chordFilter.frequency.setTargetAtTime(filterFromValue(value), audioCtx.currentTime, 0.05);
+  chordFilter.frequency.setTargetAtTime(
+    filterFromValue(value),
+    audioCtx.currentTime,
+    0.05,
+  );
   filterEl.textContent = `Filter: ${Math.round(value * 100)}%`;
 }
 
 function setChordAudible(audible) {
   if (!audioReady) return;
-  chordGain.gain.setTargetAtTime(audible ? 0.12 : 0, audioCtx.currentTime, 0.05);
+  chordGain.gain.setTargetAtTime(
+    audible ? 0.12 : 0,
+    audioCtx.currentTime,
+    0.05,
+  );
 }
 
 function initAudio() {
@@ -119,13 +139,21 @@ function initAudio() {
 }
 
 // AudioContext can only start after a genuine user interaction
-document.addEventListener("pointerdown", () => { if (!audioReady) initAudio(); }, { once: true });
+document.addEventListener(
+  "pointerdown",
+  () => {
+    if (!audioReady) initAudio();
+  },
+  { once: true },
+);
 
 // ── Sound gestures (Button 1) — left hand, 6 registers, unmodified ────────────
 
 const toneLib = new GestureLibrary();
 for (const reg of REGISTERS) {
-  toneLib.register(new TiltGesture({ name: reg.id, hand: "Left", fingers: reg.fingers }));
+  toneLib.register(
+    new TiltGesture({ name: reg.id, hand: "Left", fingers: reg.fingers }),
+  );
 }
 
 const activeRegisters = new Set();
@@ -157,11 +185,19 @@ updateToneAudible(); // reflect initial "inactive" state before any gesture is s
 
 const chordLib = new GestureLibrary();
 chordLib
-  .register(new TiltGesture({
-    name: "chord-filter",
-    hand: "Left",
-    fingers: { thumb: true, index: true, middle: true, ring: true, pinky: true },
-  }))
+  .register(
+    new TiltGesture({
+      name: "chord-filter",
+      hand: "Left",
+      fingers: {
+        thumb: true,
+        index: true,
+        middle: true,
+        ring: true,
+        pinky: true,
+      },
+    }),
+  )
   .register(new FingerCountGesture({ name: "chord-hand", hand: "Right" }));
 
 let chordHandActive = false;
@@ -222,7 +258,7 @@ modeChordsBtn.addEventListener("click", () => setMode("chords"));
   });
   await source.start(video);
 
-  canvas.width  = video.videoWidth;
+  canvas.width = video.videoWidth;
   canvas.height = video.videoHeight;
   statusEl.textContent = "Aktiv";
 
@@ -243,18 +279,21 @@ debugCanvasToggle.addEventListener("click", () => {
 });
 
 // Live debug readout of which fingers are extended and the angle of the hand,
-// for each hand 
+// for each hand
 function updateDebug(handResults) {
   const hands = selectHands(handResults, 0.7);
   const lines = [];
   for (const label of ["Left", "Right"]) {
     const lm = hands[label];
-    if (!lm) { lines.push(`${label}: keine Hand erkannt`); continue; }
+    if (!lm) {
+      lines.push(`${label}: keine Hand erkannt`);
+      continue;
+    }
     const f = (tip, pip) => (fingerExtendedRadial(lm, tip, pip) ? "✓" : "✗");
     const thumb = thumbExtended(lm) ? "✓" : "✗";
     const angle = angle2D(lm[17], lm[5]).toFixed(1);
     lines.push(
-      `${label}: Daumen ${thumb}  Zeige ${f(8, 6)}  Mittel ${f(12, 10)}  Ring ${f(16, 14)}  Klein ${f(20, 18)}  |  Winkel ${angle}°`
+      `${label}: Daumen ${thumb}  Zeige ${f(8, 6)}  Mittel ${f(12, 10)}  Ring ${f(16, 14)}  Klein ${f(20, 18)}  |  Winkel ${angle}°`,
     );
   }
   debugEl.textContent = lines.join("\n");
