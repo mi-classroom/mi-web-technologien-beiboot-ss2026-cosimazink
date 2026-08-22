@@ -3,6 +3,8 @@
 import { BaseGesture }   from "../gesture-base.js";
 import { OneEuroFilter } from "../utils/one-euro-filter.js";
 import { dist2D }        from "../utils/utils.js";
+import { selectHands }   from "../utils/hands.js";
+import { Hysteresis }    from "../utils/hysteresis.js";
 
 const SWIPE_ACTIONS = new Set(["right", "left", "up", "down"]);
 
@@ -11,6 +13,7 @@ const DEFAULTS = {
   beta:              0.05,
   confidenceMin:     0.7,
   pinchThreshold:    0.08,
+  hysteresisFactor:  1.25,
   pinchHoldMs:       500,
   axisLockThreshold: 0.04,
   axisRatio:         2.5,
@@ -33,20 +36,19 @@ export class PinchSwipeGesture extends BaseGesture {
       Left:  this._makeFilters(),
       Right: this._makeFilters(),
     };
+    this._pinchHysteresis = {
+      Left:  this._makeHysteresis(),
+      Right: this._makeHysteresis(),
+    };
   }
 
   detect(handResults, ts) {
     const { confidenceMin, minScale } = this._cfg;
-    const hands = { Left: null, Right: null };
-
-    for (let i = 0; i < handResults.landmarks.length; i++) {
-      const score = handResults.handednesses[i]?.[0]?.score ?? 0;
-      if (score < confidenceMin) continue;
-      const lm = handResults.landmarks[i];
-      if (minScale > 0 && dist2D(lm[0], lm[12]) < minScale) continue;
-      const raw   = handResults.handednesses[i][0].displayName;
-      const label = raw === "Left" ? "Right" : "Left"; // mirror correction
-      hands[label] = lm;
+    const hands = selectHands(handResults, confidenceMin);
+    if (minScale > 0) {
+      for (const label of ["Left", "Right"]) {
+        if (hands[label] && dist2D(hands[label][0], hands[label][12]) < minScale) hands[label] = null;
+      }
     }
 
     let pending = null;
@@ -65,18 +67,17 @@ export class PinchSwipeGesture extends BaseGesture {
   // True when at least one hand is large enough for near-mode detection.
   isNearMode(handResults) {
     const { confidenceMin, minScale } = this._cfg;
-    for (let i = 0; i < handResults.landmarks.length; i++) {
-      const score = handResults.handednesses[i]?.[0]?.score ?? 0;
-      if (score < confidenceMin) continue;
-      if (dist2D(handResults.landmarks[i][0], handResults.landmarks[i][12]) >= minScale) return true;
-    }
-    return false;
+    const hands = selectHands(handResults, confidenceMin);
+    return ["Left", "Right"].some(
+      (label) => hands[label] && dist2D(hands[label][0], hands[label][12]) >= minScale
+    );
   }
 
   reset() {
     for (const label of ["Left", "Right"]) {
-      this._pinchState[label] = this._makePinchState();
-      this._filters[label]    = this._makeFilters();
+      this._pinchState[label]      = this._makePinchState();
+      this._filters[label]         = this._makeFilters();
+      this._pinchHysteresis[label] = this._makeHysteresis();
     }
   }
 
@@ -93,12 +94,19 @@ export class PinchSwipeGesture extends BaseGesture {
     };
   }
 
+  // Hysteresis for pinch distance: prevents rapid toggling between "pinched" and "not pinched" when the distance is near the threshold.
+  _makeHysteresis() {
+    const { pinchThreshold, hysteresisFactor } = this._cfg;
+    return new Hysteresis(pinchThreshold, pinchThreshold * hysteresisFactor);
+  }
+
   _detectPinch(lm, f, ts, label) {
-    const { pinchThreshold, pinchHoldMs, axisLockThreshold, axisRatio, pinchMoveDelta } = this._cfg;
+    const { pinchHoldMs, axisLockThreshold, axisRatio, pinchMoveDelta } = this._cfg;
     // index partially extended (PIP above MCP) → not a closed fist
     const indexExtended = lm[6].y < lm[5].y;
-    const isPinching = indexExtended && dist2D(lm[4], lm[8]) < pinchThreshold;
-    const st         = this._pinchState[label];
+    const isClose     = this._pinchHysteresis[label].update(dist2D(lm[4], lm[8]));
+    const isPinching  = indexExtended && isClose;
+    const st          = this._pinchState[label];
 
     if (!isPinching) { this._resetPinch(label); return null; }
 
@@ -146,5 +154,6 @@ export class PinchSwipeGesture extends BaseGesture {
 
   _resetPinch(label) {
     this._pinchState[label] = this._makePinchState();
+    this._pinchHysteresis[label].reset();
   }
 }

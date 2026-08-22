@@ -4,6 +4,8 @@
 
 import { BaseGesture }            from "../gesture-base.js";
 import { dist2D, fingerExtended } from "../utils/utils.js";
+import { selectHands }            from "../utils/hands.js";
+import { remapToZone }            from "../utils/zones.js";
 
 const DEFAULTS = {
   confidenceMin:  0.7,
@@ -28,11 +30,11 @@ export class PinkyClickGesture extends BaseGesture {
 
     if (ts - this._lastClick < cooldownMs) return null;
 
-    for (let i = 0; i < handResults.landmarks.length; i++) {
-      const score = handResults.handednesses[i]?.[0]?.score ?? 0;
-      if (score < confidenceMin) continue;
+    const hands = selectHands(handResults, confidenceMin);
 
-      const lm = handResults.landmarks[i];
+    for (const label of ["Left", "Right"]) {
+      const lm = hands[label];
+      if (!lm) continue;
 
       const pinkyExtended = fingerExtended(lm, 20, 18);
       const indexExtended = fingerExtended(lm, 8,  6);
@@ -42,12 +44,10 @@ export class PinkyClickGesture extends BaseGesture {
 
       if (!(pinkyExtended && indexExtended && middleCurled && ringCurled && thumbExtended)) continue;
 
-      const { x, y } = lm[20];
-      const nx = Math.max(0, Math.min(1, (x - zoneX[0]) / (zoneX[1] - zoneX[0])));
-      const ny = Math.max(0, Math.min(1, (y - zoneY[0]) / (zoneY[1] - zoneY[0])));
+      const { x, y } = remapToZone(lm[20].x, lm[20].y, zoneX, zoneY);
 
       this._lastClick = ts;
-      return { action: "click", x: nx, y: ny };
+      return { action: "click", x, y };
     }
 
     return null;

@@ -1,13 +1,15 @@
 // Cross-shoulder tap: hold wrist near opposite shoulder for 700 ms.
 // Left wrist → right shoulder → "right"; right wrist → left shoulder → "left"
 
-import { BaseGesture }              from "../gesture-base.js";
-import { dist2D, processHoldState } from "../utils/utils.js";
+import { BaseGesture }                       from "../gesture-base.js";
+import { dist2D, processHoldState, visible } from "../utils/utils.js";
+import { Hysteresis }                        from "../utils/hysteresis.js";
 
 const DEFAULTS = {
-  holdMs:          700,
-  visibilityMin:   0.5,
-  shoulderTapDist: 0.12,
+  holdMs:           700,
+  visibilityMin:    0.5,
+  shoulderTapDist:  0.12,
+  hysteresisFactor: 1.25, // release distance = shoulderTapDist * this
 };
 
 export class ShoulderTapGesture extends BaseGesture {
@@ -21,17 +23,20 @@ export class ShoulderTapGesture extends BaseGesture {
       leftOnRight: { phase: "idle", startTs: null },
       rightOnLeft: { phase: "idle", startTs: null },
     };
+    this._makeHysteresis();
   }
 
   detect(poseResults, ts) {
     if (!poseResults?.landmarks?.length) { this.reset(); return null; }
 
     const { holdMs, visibilityMin, shoulderTapDist } = this._cfg;
-    const lm  = poseResults.landmarks[0];
-    const vis = (i) => (lm[i]?.visibility ?? 0) >= visibilityMin;
+    const lm = poseResults.landmarks[0];
 
-    const leftTap  = vis(15) && vis(12) && dist2D(lm[15], lm[12]) < shoulderTapDist;
-    const rightTap = vis(16) && vis(11) && dist2D(lm[16], lm[11]) < shoulderTapDist;
+    const leftVisible  = visible(lm, 15, visibilityMin) && visible(lm, 12, visibilityMin);
+    const rightVisible = visible(lm, 16, visibilityMin) && visible(lm, 11, visibilityMin);
+
+    const leftTap  = this._leftOnRight.update(dist2D(lm[15], lm[12]), leftVisible);
+    const rightTap = this._rightOnLeft.update(dist2D(lm[16], lm[11]), rightVisible);
 
     const r1 = processHoldState(this._state.leftOnRight, leftTap,  "right", ts, holdMs);
     const r2 = processHoldState(this._state.rightOnLeft, rightTap, "left",  ts, holdMs);
@@ -47,5 +52,13 @@ export class ShoulderTapGesture extends BaseGesture {
   reset() {
     this._state.leftOnRight = { phase: "idle", startTs: null };
     this._state.rightOnLeft = { phase: "idle", startTs: null };
+    this._makeHysteresis();
+  }
+
+  _makeHysteresis() {
+    const { shoulderTapDist, hysteresisFactor } = this._cfg;
+    const offAt = shoulderTapDist * hysteresisFactor;
+    this._leftOnRight  = new Hysteresis(shoulderTapDist, offAt);
+    this._rightOnLeft  = new Hysteresis(shoulderTapDist, offAt);
   }
 }

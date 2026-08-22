@@ -1,7 +1,9 @@
 # ADR 004 — Erkenntnisse aus Issue #4: GestureShop Demo
 
-**Status:** Accepted  
-**Date:** 2026-07-13
+* Status: accepted
+* Deciders: Cosima Zink
+* Issue: [4](https://github.com/mi-classroom/mi-web-technologien-beiboot-ss2026-cosimazink/issues/5)
+* Date: 2026-07-13
 
 ## Kontext
 

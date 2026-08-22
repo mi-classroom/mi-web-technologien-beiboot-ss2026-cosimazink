@@ -127,6 +127,7 @@ async function startCamera() {
 }
 
 function predict() {
+  // Prevents multiple predictions on the same frame
   if (video.readyState < 2) { requestAnimationFrame(predict); return; }
 
   const now = video.currentTime;
@@ -153,6 +154,7 @@ function predict() {
   renderResults(results);
   drawPoseLandmarks(poseResults);
 
+  // Results into gesture library for gesture detection
   lib.detect({ handResults: results, poseResults }, ts);
 
   gestureDisplay.textContent = activeLabel ?? "–";
@@ -160,6 +162,7 @@ function predict() {
   requestAnimationFrame(predict);
 }
 
+// Draws hand landmarks and gesture labels onto the canvas, and updates the left/right panels
 function renderResults(results) {
   const drawing   = new DrawingUtils(ctx);
   const handsData = { Left: null, Right: null };
@@ -190,6 +193,7 @@ function renderResults(results) {
   updatePanel("right", handsData.Left);
 }
 
+// Draws pose landmarks onto the canvas, highlighting key points (nose, shoulders, wrists, hips)
 function drawPoseLandmarks(poseResults) {
   if (!poseResults?.landmarks?.length) return;
   const drawing = new DrawingUtils(ctx);
@@ -214,6 +218,7 @@ function drawPoseLandmarks(poseResults) {
   }
 }
 
+// Updates the left/right panels with the current gesture and landmark data
 function updatePanel(side, data) {
   const noHand = document.getElementById(`no-hand-${side}`);
   const gestEl = document.getElementById(`gesture-${side}`);
@@ -242,6 +247,7 @@ function updatePanel(side, data) {
     .join("");
 }
 
+// Error handling
 init().catch(err => {
   status.textContent = `Fehler: ${err.message}`;
   console.error(err);

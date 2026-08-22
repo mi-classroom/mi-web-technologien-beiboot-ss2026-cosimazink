@@ -1,0 +1,164 @@
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: system-ui, sans-serif;
+  background: #fffefb;
+  color: #0f0e0e;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 2rem;
+  min-height: 100vh;
+}
+
+h1 { font-size: 4rem; font-weight: 700; color: #0f0e0e; }
+h2 { font-size: 1.5rem; font-weight: 700; color: #0f0e0e; }
+p.hint {
+  font-size: 1rem;
+  color: #747474;
+  max-width: 30rem;
+  text-align: left;
+  min-height: 9.5rem; /* fest auf die Höhe der längeren Variante (Tones-Hinweis), damit der Moduswechsel nichts verschiebt */
+}
+
+.layout {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 2rem;
+}
+
+.info-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.75rem;
+  text-align: left;
+  width: 27rem; 
+}
+
+#mode-switch { display: flex; gap: 0.5rem; }
+#mode-switch button {
+  font: inherit;
+  font-size: 1rem;
+  padding: 0.5rem 1rem;
+  margin-bottom: 1rem;
+  border: 1px solid #333;
+  border-radius: 4px;
+  background: #1a1a1a;
+  color: #989898;
+  cursor: pointer;
+}
+body[data-mode="tones"] #mode-tones,
+body[data-mode="chords"] #mode-chords {
+  background: rgb(126, 163, 238);
+  border-color: rgb(126, 163, 238);
+  color: #111;
+}
+
+body[data-mode="tones"] .chords-only,
+body[data-mode="chords"] .tones-only {
+  display: none;
+}
+
+#camera {
+  position: relative;
+  width: 800px;
+  max-width: 90vw;
+  aspect-ratio: 4/3;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #000;
+}
+#video, #canvas {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  transform: scaleX(-1);
+}
+
+#register {
+  font-family: monospace;
+  font-size: 1.1rem;
+  color: rgb(126, 163, 238);
+  min-height: 1.3rem; /* sonst kollabiert die Box auf 0, solange der Inhalt nur ein Leerzeichen ist */
+}
+#note {
+  font-family: monospace;
+  font-size: 2rem;
+  color: rgb(126, 163, 238);
+  min-height: 2.5rem;
+}
+#tone-state {
+  font-family: monospace;
+  font-size: 1rem;
+  font-weight: 600;
+}
+#chord {
+  font-family: monospace;
+  font-size: 2rem;
+  color: rgb(126, 163, 238);
+  min-height: 2.5rem;
+}
+#filter-value {
+  font-family: monospace;
+  font-size: 1.1rem;
+  color: #747474;
+}
+#chord-state {
+  font-family: monospace;
+  font-size: 1rem;
+  font-weight: 600;
+}
+#toggle-debug-canvas {
+  font: inherit;
+  font-size: 0.75rem;
+  padding: 0.4rem 0.8rem;
+  border: 1px solid #b7b7b7;
+  border-radius: 4px;
+  background: #b7b7b7;
+  color: #0f0e0e;
+  cursor: pointer;
+}
+#toggle-debug-canvas:disabled { opacity: 0.4; cursor: default; }
+
+#debug-canvas-wrapper {
+  display: none;
+  width: 160px;
+  aspect-ratio: 4/3;
+  border-radius: 4px;
+  overflow: hidden;
+}
+#debug-canvas-wrapper.visible { display: block; }
+#debug-canvas-wrapper canvas {
+  display: block;
+  width: 160px;
+  height: auto;
+  transform: scaleX(-1);
+}
+
+#status { font-family: monospace; font-size: 0.75rem; color: #999; }
+#unlock-hint {
+  font-size: 1.5rem;
+  font-weight: 650;
+  color: rgb(126, 163, 238);
+}
+#debug {
+  font-family: monospace;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: rgb(126, 163, 238);
+  white-space: pre-wrap;
+  text-align: left;
+  width: 100%;
+  height: 6em;
+  overflow-y: auto; 
+}
+
+.footer {
+  width: 100%;       /* oder ganz weglassen, hr ist standardmäßig schon 100% breit */
+  border: none;      /* Browser-Default-Rahmen entfernen */
+  border-top: 1px solid #ccc;
+  margin: 1rem 0;
+}
