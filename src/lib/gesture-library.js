@@ -14,10 +14,7 @@ export class GestureLibrary {
     return this;
   }
 
-  // Subscribe to a gesture event.
-  // "gesture-name"         fires on every non-null result
-  // "gesture-name:action"  fires only when that specific action occurs
-  // "gesture-name:idle"    fires once when a previously active gesture becomes inactive
+  // Comparable to addEventListener, removeEventListener
   on(event, callback) {
     if (!this.#listeners.has(event)) this.#listeners.set(event, new Set());
     this.#listeners.get(event).add(callback);
@@ -37,7 +34,14 @@ export class GestureLibrary {
       const input = gesture.requiredInput === "pose" ? poseResults : handResults;
       if (!input) continue;
 
-      const result = gesture.detect(input, timestamp);
+      let result;
+      try {
+        result = gesture.detect(input, timestamp);
+      } catch (e) {
+        console.error(`GestureLibrary: error detecting "${gesture.name}"`, e);
+        continue;
+      }
+
       if (result) {
         nowActive.add(gesture.name);
         this.#emit(gesture.name, result);
@@ -62,6 +66,7 @@ export class GestureLibrary {
     return this;
   }
 
+  // Emits an event to all registered listeners, catching and logging any errors.
   #emit(event, data) {
     for (const cb of this.#listeners.get(event) ?? []) {
       try { cb(data); } catch (e) { console.error(`GestureLibrary: error in "${event}" handler`, e); }

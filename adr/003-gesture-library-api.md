@@ -2,7 +2,7 @@
 
 * Status: accepted
 * Deciders: Cosima Zink
-* Issue: [3](https://github.com/mi-classroom/mi-web-technologien-beiboot-ss2026-cosimazink/issues/3)
+* Issue: [3](https://github.com/mi-classroom/mi-web-technologien-beiboot-ss2026-cosimazink/issues/4)
 * Date: 2026-06-11
 
 ## Context and Problem Statement

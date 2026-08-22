@@ -9,6 +9,10 @@ export { HandsToHeadGesture } from "./gestures/hands-to-head.js";
 export { HandsToHipsGesture } from "./gestures/hands-to-hips.js";
 export { PinkyPointerGesture } from "./gestures/pinky-pointer.js";
 export { PinkyClickGesture }   from "./gestures/pinky-click.js";
+export { TiltGesture }         from "./gestures/tilt.js";
 
 // Optional utilities — useful when writing custom gestures
-export { dist2D, fingerExtended } from "./utils/utils.js";
+export { dist2D, fingerExtended, fingerExtendedRadial, thumbExtended, visible, angle2D, processHoldState } from "./utils/utils.js";
+export { selectHands, mirrorHandedness }                              from "./utils/hands.js";
+export { remapToZone, clampRemap01 }                                  from "./utils/zones.js";
+export { Hysteresis }                                                 from "./utils/hysteresis.js";

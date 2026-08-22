@@ -8,6 +8,7 @@
 - [ADR 002 – Gesture Heuristics & Algorithm Parameters](./adr/002-gesture-heuristics.md)
 - [ADR 003 – Gesture Library API Design](./adr/003-gesture-library-api.md)
 - [ADR 004 – Gesture Library API Design](./adr/004-gesture-demo.md)
+- [ADR 005 – Library-Cleanup & Musik-App: erste Gesten](./adr/005-application.md)
 
 ## Lokal starten
 
@@ -15,9 +16,8 @@
 npx serve src
 ```
 
-→ [http://localhost:3000](http://localhost:3000) – Landmark-Demo  
-→ [http://localhost:3000/lib-test.html](http://localhost:3000/lib-test.html) – Demo der API
-→ [http://localhost:3000/lib-test.html](http://localhost:3000/lib-test.html) – Gesture Library Testseite
+→ [http://localhost:3000](http://localhost:3000) – Reine Handdaten-Ansicht (Landmarks, keine Anwendung)  
+→ [http://localhost:3000/app/](http://localhost:3000/app/) – Musik-Anwendung (siehe [ADR 005, Teil B](./adr/005-application.md))
 
 > Kein Build-Schritt nötig. Die Anwendung läuft vollständig im Browser via MediaPipe Web SDK.
 
@@ -25,8 +25,8 @@ npx serve src
 
 ## Gesture Library
 
-Die Library kapselt die Gestenlogik unabhängig von der Demo-Anwendung.  
-Sie liegt unter `src/lib/` und hat keine Abhängigkeit zu DOM oder Reveal.js.
+Die Library kapselt die Gestenlogik unabhängig von der Anwendung.  
+Sie liegt unter `src/lib/` und hat keine Abhängigkeit zu DOM (Ausnahme: der optionale Adapter unter `lib/adapters/`, siehe [ADR 005](./adr/005-application.md)).
 
 ### Installation
 
@@ -44,6 +44,12 @@ import {
   BaseGesture,      // nur nötig wenn du eigene Gesten schreibst
   dist2D,           // optional – Hilfsfunktion für eigene Gesten
   fingerExtended,   // optional – Hilfsfunktion für eigene Gesten
+  visible,          // optional – Pose-Landmark-Sichtbarkeit prüfen
+  selectHands,      // optional – Hände auswählen (Confidence-Filter + Mirror-Korrektur)
+  mirrorHandedness, // optional – MediaPipes Left/Right-Label korrigieren
+  remapToZone,      // optional – Koordinate in aktive Kamerazone remappen
+  processHoldState, // optional – Hold-Zustandsmaschine für Pose-Gesten
+  Hysteresis,       // optional – Schmitt-Trigger gegen Flackern an einer Schwelle
 } from "./lib/index.js";
 ```
 
@@ -125,12 +131,14 @@ Alle Gesten akzeptieren ein optionales Konfigurations-Objekt:
 
 ```js
 new PinchSwipeGesture({
-  pinchThreshold: 0.08,  // Abstand Daumen–Zeigefinger für Pinch-Erkennung
-  pinchHoldMs:    500,   // Wartezeit bevor Pinch als "armed" gilt (ms)
-  pinchMoveDelta: 0.13,  // Mindestbewegung zum Auslösen (normalisiert)
-  minScale:       0.10,  // Minimale Handgröße (0 = kein Abstandsgate)
+  pinchThreshold:   0.08,  // Abstand Daumen–Zeigefinger für Pinch-Erkennung ("Einschalt"-Schwelle)
+  hysteresisFactor: 1.25,  // "Ausschalt"-Schwelle = pinchThreshold * dieser Faktor, verhindert Flackern
+  pinchHoldMs:      500,   // Wartezeit bevor Pinch als "armed" gilt (ms)
+  pinchMoveDelta:   0.13,  // Mindestbewegung zum Auslösen (normalisiert)
+  minScale:         0.10,  // Minimale Handgröße (0 = kein Abstandsgate)
 });
 
+// hysteresisFactor gilt genauso für die drei Hold-Gesten (Default 1.25):
 new ShoulderTapGesture({ holdMs: 700, shoulderTapDist: 0.12 });
 new HandsToHeadGesture({ holdMs: 700, headDist: 0.25 });
 new HandsToHipsGesture({ holdMs: 700, hipDist:  0.20 });
@@ -181,6 +189,42 @@ lib.register(new MyGesture());
 lib.on("my-gesture:my-action", () => { /* ... */ });
 ```
 
+Für Hand-Gesten übernehmen `selectHands()` und `remapToZone()` typische Vorarbeit:
+
+```js
+import { BaseGesture, selectHands, remapToZone } from "./lib/index.js";
+
+export class MyGesture extends BaseGesture {
+  get name() { return "my-gesture"; }
+  get requiredInput() { return "hands"; }
+
+  detect(handResults, ts) {
+    const hands = selectHands(handResults, 0.7); // { Left, Right }, Mirror-korrigiert
+    const lm = hands.Right;
+    if (!lm) return null;
+
+    const { x, y } = remapToZone(lm[8].x, lm[8].y, [0.15, 0.85], [0.10, 0.90]);
+    return { state: "active", x, y };
+  }
+}
+```
+
+### MediaPipeSource (optionaler Adapter)
+
+Die Library selbst ist DOM-frei und kennt weder Kamera noch MediaPipe-Modelle – sie nimmt nur `{ handResults, poseResults }` entgegen. Wer sich das MediaPipe-Boilerplate (Modelle laden, Kamera starten, `requestAnimationFrame`-Loop) sparen will, kann optional `MediaPipeSource` importieren. Liegt bewusst **nicht** in `lib/index.js`, sondern in einem eigenen Adapter-Modul – siehe [ADR 005](./adr/005-application.md):
+
+```js
+import { GestureLibrary, PinkyPointerGesture } from "./lib/index.js";
+import { MediaPipeSource } from "./lib/adapters/mediapipe-source.js";
+
+const lib = new GestureLibrary().register(new PinkyPointerGesture());
+lib.on("pinky-pointer", ({ x, y }) => moveCursor(x, y));
+
+const source = new MediaPipeSource({ hands: true, pose: false }); // welche Modelle laden
+source.on("frame", (input, ts) => lib.detect(input, ts));
+await source.start(document.querySelector("video"));              // startet Kamera + Loop
+```
+
 ### Dateistruktur
 
 ```
@@ -196,12 +240,28 @@ src/
       hands-to-hips.js          Hände zur Hüfte (Körper, Fernbereich)
       pinky-pointer.js          Kleinfinger → Cursor bewegen (Hand, Nahbereich)
       pinky-click.js            Kleinfinger + Daumen → Klick (Hand, Nahbereich)
+      tilt.js                   TiltGesture – konfigurierbare Fingerform + Kippwinkel → [0,1]
     utils/
-      one-euro-filter.js        Signalglättung (intern)
-      utils.js                  dist2D, fingerExtended, processHoldState (intern)
-  lib-test.html                 Interaktive Testseite für die Library
-  scripts/                      Demo-Anwendungen
-    gesture-control.js          Gestensteuerung für presentation.html
-    gesture-recognition.js      Landmark-Visualisierung für index.html
-    gestures/                   Prototyp-Module aus Issue #2
+      one-euro-filter.js        Signalglättung
+      utils.js                  dist2D, fingerExtended, fingerExtendedRadial, thumbExtended, visible, processHoldState
+      hands.js                  selectHands, mirrorHandedness
+      zones.js                  remapToZone
+      hysteresis.js             Hysteresis (Schmitt-Trigger gegen Flackern an einer Schwelle)
+    adapters/
+      mediapipe-source.js       Optionaler MediaPipe-Adapter (Kamera + Modelle + Frame-Loop), DOM-Abhängigkeit bewusst isoliert vom Kern
+  index.html                     Reine Handdaten-Ansicht (Landmarks, keine Anwendung)
+  scripts/
+    gesture-recognition.js       Landmark-Visualisierung für index.html
+  app/                            Musik-Anwendung (alles Anwendungsspezifische, isoliert von lib/)
+    index.html
+    styles.css
+    main.js                       Audio, Kamera, Verdrahtung
+    gestures/                     Eine Datei pro Register-Geste
+      sub-bass.js
+      bass.js
+      low-mid.js
+      mid.js
+      hi-mid.js
+      high.js
+      index.js                    Fasst alle 6 zu REGISTERS zusammen
 ```

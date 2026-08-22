@@ -1,12 +1,14 @@
 // Both wrists held near their same-side hip for 700 ms → action "down"
 
-import { BaseGesture }              from "../gesture-base.js";
-import { dist2D, processHoldState } from "../utils/utils.js";
+import { BaseGesture }                       from "../gesture-base.js";
+import { dist2D, processHoldState, visible } from "../utils/utils.js";
+import { Hysteresis }                        from "../utils/hysteresis.js";
 
 const DEFAULTS = {
-  holdMs:        700,
-  visibilityMin: 0.5,
-  hipDist:       0.20,
+  holdMs:           700,
+  visibilityMin:    0.5,
+  hipDist:          0.20,
+  hysteresisFactor: 1.25, // release distance = hipDist * this
 };
 
 export class HandsToHipsGesture extends BaseGesture {
@@ -17,18 +19,19 @@ export class HandsToHipsGesture extends BaseGesture {
     super();
     this._cfg   = { ...DEFAULTS, ...options };
     this._state = { phase: "idle", startTs: null };
+    this._makeHysteresis();
   }
 
   detect(poseResults, ts) {
     if (!poseResults?.landmarks?.length) { this.reset(); return null; }
 
     const { holdMs, visibilityMin, hipDist } = this._cfg;
-    const lm  = poseResults.landmarks[0];
-    const vis = (i) => (lm[i]?.visibility ?? 0) >= visibilityMin;
+    const lm = poseResults.landmarks[0];
 
-    const bothNearHips = vis(15) && vis(16) && vis(23) && vis(24)
-                      && dist2D(lm[15], lm[23]) < hipDist
-                      && dist2D(lm[16], lm[24]) < hipDist;
+    const bothVisible = visible(lm, 15, visibilityMin) && visible(lm, 16, visibilityMin)
+                      && visible(lm, 23, visibilityMin) && visible(lm, 24, visibilityMin);
+    const maxDist      = Math.max(dist2D(lm[15], lm[23]), dist2D(lm[16], lm[24]));
+    const bothNearHips = this._hysteresis.update(maxDist, bothVisible);
 
     const r = processHoldState(this._state, bothNearHips, "down", ts, holdMs);
     if (!r) return null;
@@ -37,5 +40,11 @@ export class HandsToHipsGesture extends BaseGesture {
 
   reset() {
     this._state = { phase: "idle", startTs: null };
+    this._makeHysteresis();
+  }
+
+  _makeHysteresis() {
+    const { hipDist, hysteresisFactor } = this._cfg;
+    this._hysteresis = new Hysteresis(hipDist, hipDist * hysteresisFactor);
   }
 }

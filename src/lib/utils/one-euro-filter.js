@@ -1,9 +1,5 @@
-/**
- * One Euro Filter — smooths noisy 1-D signals.
- * Reduces jitter at rest while keeping low latency during fast movement.
- *
- * Reference: Casiez et al. (2012) https://inria.hal.science/hal-00670496
- */
+ // One Euro Filter: smooths noisy 1-D signals.
+ // Reduces jitter at rest while keeping low latency during fast movement.
 export class OneEuroFilter {
   /**
    * @param {number} minCutoff - minimum cutoff frequency (Hz). Lower = smoother at rest.
@@ -19,6 +15,7 @@ export class OneEuroFilter {
     this._lastT     = null;
   }
 
+  // Computes the smoothing factor alpha for a given cutoff frequency.
   _alpha(freq, cutoff) {
     const te  = 1 / freq;
     const tau = 1 / (2 * Math.PI * cutoff);
@@ -29,8 +26,9 @@ export class OneEuroFilter {
    * Feed a new sample into the filter.
    * @param {number} x         - raw value
    * @param {number} timestamp - current time in ms (e.g. performance.now())
-   * @returns {number} smoothed value
+   * @returns {number}         - smoothed value
    */
+  // Use filter per frame
   filter(x, timestamp) {
     if (this._lastT === null) { this._lastT = timestamp; this._x = x; return x; }
     const dt   = Math.max((timestamp - this._lastT) / 1000, 1e-6);

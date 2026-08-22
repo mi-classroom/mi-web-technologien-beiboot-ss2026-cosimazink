@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Music App — 6 Register</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="stylesheet" href="/app/styles.css" />
+</head>
+<body>
+
+  <h1>6 Register (noch kein Loop/Aufnahme)</h1>
+  <p class="hint">
+    6 Register per Fingerform (linke Hand):
+    Zeigefinger = Sub-Bass · +Mittel = Bass · +Ring = Tiefmitten · +Klein = Mitten · +Daumen (offene Hand) = Hochmitten · Zeige+Klein = Höhen.
+    Jeweils langsam kippen (Handgelenk drehen), um innerhalb des Registers zu gleiten. Ton läuft, solange eine der Formen gezeigt wird.
+  </p>
+
+  <p id="unlock-hint">Einmal irgendwo klicken, um Audio zu aktivieren (Browser-Vorgabe, nicht umgehbar).</p>
+
+  <div id="camera">
+    <video id="video" autoplay playsinline muted></video>
+    <canvas id="canvas"></canvas>
+  </div>
+
+  <div id="register">–</div>
+  <div id="note">–</div>
+  <div id="tone-state">🔇 Ton inaktiv</div>
+  <div id="status">Lade…</div>
+  <pre id="debug">–</pre>
+
+  <script type="module" src="/app/main.js"></script>
+</body>
+</html>

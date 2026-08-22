@@ -1,0 +1,59 @@
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: system-ui, sans-serif;
+  background: #111;
+  color: #eee;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 2rem;
+  min-height: 100vh;
+}
+
+h1 { font-size: 1rem; font-weight: 600; color: #f90; }
+p.hint { font-size: 0.8rem; color: #999; text-align: center; max-width: 30rem; }
+
+#camera {
+  position: relative;
+  width: 480px;
+  max-width: 90vw;
+  aspect-ratio: 4/3;
+  border: 1px solid #333;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #000;
+}
+#video, #canvas {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  transform: scaleX(-1);
+}
+
+#register {
+  font-family: monospace;
+  font-size: 1.1rem;
+  color: #f90;
+}
+#note {
+  font-family: monospace;
+  font-size: 2rem;
+  color: #f90;
+  min-height: 2.5rem;
+}
+#tone-state {
+  font-family: monospace;
+  font-size: 1rem;
+  font-weight: 600;
+}
+#status { font-family: monospace; font-size: 0.75rem; color: #999; }
+#unlock-hint { font-size: 0.75rem; color: #f90; }
+#debug {
+  font-family: monospace;
+  font-size: 0.75rem;
+  color: #6cf;
+  white-space: pre-wrap;
+  text-align: left;
+}
