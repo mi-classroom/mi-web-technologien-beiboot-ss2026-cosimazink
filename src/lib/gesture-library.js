@@ -1,7 +1,7 @@
 export class GestureLibrary {
-  #gestures  = new Map(); // name → BaseGesture instance
+  #gestures = new Map(); // name → BaseGesture instance
   #listeners = new Map(); // event → Set<callback>
-  #active    = new Set(); // gesture names active in the previous frame
+  #active = new Set(); // gesture names active in the previous frame
 
   // Register a gesture. Replaces any existing gesture with the same name.
   register(gesture) {
@@ -34,7 +34,8 @@ export class GestureLibrary {
     const nowActive = new Set();
 
     for (const gesture of this.#gestures.values()) {
-      const input = gesture.requiredInput === "pose" ? poseResults : handResults;
+      const input =
+        gesture.requiredInput === "pose" ? poseResults : handResults;
       if (!input) continue;
 
       let result;
@@ -48,7 +49,8 @@ export class GestureLibrary {
       if (result) {
         nowActive.add(gesture.name);
         this.#emit(gesture.name, result);
-        if (result.action) this.#emit(`${gesture.name}:${result.action}`, result);
+        if (result.action)
+          this.#emit(`${gesture.name}:${result.action}`, result);
       }
     }
 
@@ -72,7 +74,11 @@ export class GestureLibrary {
   // Emits an event to all registered listeners, catching and logging any errors.
   #emit(event, data) {
     for (const cb of this.#listeners.get(event) ?? []) {
-      try { cb(data); } catch (e) { console.error(`GestureLibrary: error in "${event}" handler`, e); }
+      try {
+        cb(data);
+      } catch (e) {
+        console.error(`GestureLibrary: error in "${event}" handler`, e);
+      }
     }
   }
 }

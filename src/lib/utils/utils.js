@@ -18,7 +18,7 @@ export function fingerExtendedRadial(lm, tipIdx, pipIdx, wristIdx = 0) {
 // The thumb doesn't curl toward the wrist the way the other four fingers do.
 // Extended when the tip is far from the index finger's base, tucked in, it
 // ends up close to it.
-export function thumbExtended(lm, extendMin = 0.10) {
+export function thumbExtended(lm, extendMin = 0.1) {
   return dist2D(lm[4], lm[5]) > extendMin;
 }
 
@@ -36,11 +36,22 @@ export function angle2D(a, b) {
 // Hold-state machine for body-pose gestures.
 // Returns action name when hold completes, "holding" while counting, null otherwise.
 export function processHoldState(st, isActive, action, ts, holdMs) {
-  if (!isActive) { st.phase = "idle"; st.startTs = null; return null; }
-  if (st.phase === "fired")   return null;
-  if (st.phase === "idle")    { st.phase = "holding"; st.startTs = ts; return "holding"; }
+  if (!isActive) {
+    st.phase = "idle";
+    st.startTs = null;
+    return null;
+  }
+  if (st.phase === "fired") return null;
+  if (st.phase === "idle") {
+    st.phase = "holding";
+    st.startTs = ts;
+    return "holding";
+  }
   if (st.phase === "holding") {
-    if (ts - st.startTs >= holdMs) { st.phase = "fired"; return action; }
+    if (ts - st.startTs >= holdMs) {
+      st.phase = "fired";
+      return action;
+    }
     return "holding";
   }
   return null;

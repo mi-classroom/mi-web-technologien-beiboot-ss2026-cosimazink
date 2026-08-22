@@ -1,66 +1,68 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="de">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Music App</title>
-  <link rel="icon" type="image/svg+xml" href="../favicon.svg" />
-  <link rel="stylesheet" href="variables.css" />
-  <link rel="stylesheet" href="styles.css" />
-</head>
-<body data-mode="tones">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Music App</title>
+    <link rel="icon" type="image/svg+xml" href="../favicon.svg" />
+    <link rel="stylesheet" href="variables.css" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body data-mode="tones">
+    <h1>MUSIC</h1>
 
-  <h1>MUSIC</h1>
-
-  <div id="mode-switch">
-    <button id="mode-tones">Frequencies (sub-bass to treble)</button>
-    <button id="mode-chords">Chords</button>
-  </div>
-
-  <div class="layout">
-    <div id="camera">
-      <video id="video" autoplay playsinline muted></video>
-      <canvas id="canvas"></canvas>
+    <div id="mode-switch">
+      <button id="mode-tones">Frequencies (sub-bass to treble)</button>
+      <button id="mode-chords">Chords</button>
     </div>
 
-    <div class="info-panel">
-      <p id="unlock-hint">Click one time to start MUSIC</p>
+    <div class="layout">
+      <div id="camera">
+        <video id="video" autoplay playsinline muted></video>
+        <canvas id="canvas"></canvas>
+      </div>
 
-      <h2>HOW TO PLAY</h2>
-      <p class="hint tones-only">
-        Six registers per finger shape: <br>
-        Index finger = sub-bass <br>
-        + Middle finger = bass <br>
-        + Ring finger = low-midrange <br>
-        + Little finger = midrange <br>
-        + Thumb (open hand) = high-midrange <br>
-        Index + Little finger = treble<br>
-        Tilt slowly to glide within each register.
-      </p>
-      <p class="hint chords-only">
-        Major/minor chords in A major <br>
-        the right hand selects the degree using the number of fingers <br>
-        (1 finger = I, 2 = ii, 3 = iii, 4 = IV, 5 = V) <br>
-        Keep the left hand open and tilt it to control the timbre (filter). The note continues to sound as long as the
-        right hand indicates a degree.
-      </p>
+      <div class="info-panel">
+        <p id="unlock-hint">Click one time to start MUSIC</p>
 
-      <div id="register" class="tones-only"> </div>
-      <div id="note" class="tones-only"> </div>
-      <div id="tone-state" class="tones-only">Sound off</div>
+        <h2>HOW TO PLAY</h2>
+        <p class="hint tones-only">
+          Six registers per finger shape: <br />
+          Index finger = sub-bass <br />
+          + Middle finger = bass <br />
+          + Ring finger = low-midrange <br />
+          + Little finger = midrange <br />
+          + Thumb (open hand) = high-midrange <br />
+          Index + Little finger = treble<br />
+          Tilt slowly to glide within each register.
+        </p>
+        <p class="hint chords-only">
+          Major/minor chords in A major <br />
+          the right hand selects the degree using the number of fingers <br />
+          (1 finger = I, 2 = ii, 3 = iii, 4 = IV, 5 = V) <br />
+          Keep the left hand open and tilt it to control the timbre (filter).
+          The note continues to sound as long as the right hand indicates a
+          degree.
+        </p>
 
-      <div id="chord" class="chords-only"> </div>
-      <div id="filter-value" class="chords-only">Filter: </div>
-      <div id="chord-state" class="chords-only">Sound off</div>
+        <div id="register" class="tones-only"></div>
+        <div id="note" class="tones-only"></div>
+        <div id="tone-state" class="tones-only">Sound off</div>
 
-      <button id="toggle-debug-canvas" disabled>Show exposure compensation</button>
-      <div id="debug-canvas-wrapper"></div>
+        <div id="chord" class="chords-only"></div>
+        <div id="filter-value" class="chords-only">Filter:</div>
+        <div id="chord-state" class="chords-only">Sound off</div>
 
-      <div id="status">Loading…</div>
-      <pre id="debug">–</pre>
+        <button id="toggle-debug-canvas" disabled>
+          Show exposure compensation
+        </button>
+        <div id="debug-canvas-wrapper"></div>
+
+        <div id="status">Loading…</div>
+        <pre id="debug">–</pre>
+      </div>
     </div>
-  </div>
 
-  <script type="module" src="main.js"></script>
-</body>
+    <script type="module" src="main.js"></script>
+  </body>
 </html>

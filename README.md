@@ -32,6 +32,28 @@ npx serve src
 
 > Kein Build-Schritt nötig. Die Anwendung läuft vollständig im Browser via MediaPipe Web SDK.
 
+## CI
+
+Bei jedem Push/PR gegen `main` prüft [.github/workflows/ci.yml](./.github/workflows/ci.yml):
+1. **Syntax** – alle JS-Dateien parsen fehlerfrei (Ersatz für einen "Build"-Check, da es keinen Bundler gibt)
+2. **Formatierung** – `prettier --check` über JS/CSS/HTML
+3. **Tests** – der Unit-Test-Suite (siehe [test/](./test/))
+4. **Lint** – ESLint; die Config wird nur innerhalb des Workflows erzeugt, nicht im Repo geführt, lokal bleibt das Projekt bewusst ohne Linter-Setup
+
+### Tests
+
+```bash
+node --test "test/*.test.js"
+```
+
+Kein Test-Framework nötig (Node's eingebauter Test-Runner). Was getestet wird und warum: siehe [test/README.md](./test/README.md).
+
+### Formatierung
+
+```bash
+npx prettier --write "src/**/*.{js,css,html}" "test/**/*.js"
+```
+
 ## Deployment
 
 Läuft komplett client-seitig (kein Server-Code, kein Build-Schritt) und lässt sich deshalb 1:1 als statische Seite deployen. Deployt über **GitHub Pages** via GitHub Actions ([.github/workflows/deploy-pages.yml](.github/workflows/deploy-pages.yml)): Bei jedem Push auf `main` wird der Inhalt von `src/` automatisch als Pages-Artefakt hochgeladen und veröffentlicht, kein manueller Schritt nötig.
