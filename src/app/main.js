@@ -28,6 +28,8 @@ const unlockHint   = document.getElementById("unlock-hint");
 const debugEl      = document.getElementById("debug");
 const modeTonesBtn  = document.getElementById("mode-tones");
 const modeChordsBtn = document.getElementById("mode-chords");
+const debugCanvasToggle  = document.getElementById("toggle-debug-canvas");
+const debugCanvasWrapper = document.getElementById("debug-canvas-wrapper");
 
 let audioCtx, audioReady = false;
 
@@ -226,9 +228,24 @@ modeChordsBtn.addEventListener("click", () => setMode("chords"));
   canvas.width  = video.videoWidth;
   canvas.height = video.videoHeight;
   statusEl.textContent = "Aktiv";
+
+  // Zeigt den Canvas, den MediaPipe tatsächlich zu sehen bekommt (nach
+  // Belichtungskorrektur) — nur zur Veranschaulichung, z. B. bei einer
+  // Präsentation, keine Auswirkung auf die Erkennung selbst.
+  debugCanvasWrapper.appendChild(source.debugCanvas);
+  debugCanvasToggle.disabled = false;
 })().catch((err) => {
   statusEl.textContent = `Fehler: ${err.message}`;
   console.error(err);
+});
+
+let debugCanvasVisible = false;
+debugCanvasToggle.addEventListener("click", () => {
+  debugCanvasVisible = !debugCanvasVisible;
+  debugCanvasWrapper.classList.toggle("visible", debugCanvasVisible);
+  debugCanvasToggle.textContent = debugCanvasVisible
+    ? "Belichtungskorrektur ausblenden"
+    : "Belichtungskorrektur einblenden";
 });
 
 // Live debug readout of which fingers are extended and the angle of the hand,

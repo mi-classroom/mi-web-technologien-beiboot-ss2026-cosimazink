@@ -74,6 +74,14 @@ export class MediaPipeSource {
     return this;
   }
 
+  // The canvas the exposure-corrected frame is drawn to — the same one that
+  // actually goes into MediaPipe. Exposed so a consuming app can display it
+  // (e.g. to visualize how strongly the correction is currently kicking in).
+  // null until start() has completed.
+  get debugCanvas() {
+    return this.#procCanvas;
+  }
+
   // Loads the requested models, requests the camera, and starts the frame
   // loop. `video` must be an HTMLVideoElement already in the DOM
   async start(video) {

@@ -88,6 +88,32 @@ body[data-mode="chords"] .tones-only {
   font-size: 1rem;
   font-weight: 600;
 }
+#toggle-debug-canvas {
+  font: inherit;
+  font-size: 0.75rem;
+  padding: 0.4rem 0.8rem;
+  border: 1px solid #333;
+  border-radius: 4px;
+  background: #1a1a1a;
+  color: #999;
+  cursor: pointer;
+}
+#toggle-debug-canvas:disabled { opacity: 0.4; cursor: default; }
+
+#debug-canvas-wrapper {
+  display: none;
+  border: 1px solid #333;
+  border-radius: 4px;
+  overflow: hidden;
+}
+#debug-canvas-wrapper.visible { display: block; }
+#debug-canvas-wrapper canvas {
+  display: block;
+  width: 160px;
+  height: auto;
+  transform: scaleX(-1); /* gleiche Spiegelung wie die Haupt-Vorschau, nur zur Orientierung */
+}
+
 #status { font-family: monospace; font-size: 0.75rem; color: #999; }
 #unlock-hint { font-size: 0.75rem; color: #f90; }
 #debug {
