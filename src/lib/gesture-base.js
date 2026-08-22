@@ -9,7 +9,7 @@ export class BaseGesture {
   }
 
   // Return null (inactive), { state } (building up), or { action } (fired)
-  detect(input, timestamp) {
+  detect(_input, _timestamp) {
     return null;
   }
 

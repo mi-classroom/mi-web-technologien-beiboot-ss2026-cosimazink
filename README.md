@@ -1,7 +1,7 @@
 # Web Technologien // begleitendes Projekt Sommersemester 2026
 
 - [Informationen zum Projekt](https://github.com/mi-classroom/mi-web-technologien-beiboot-ss2026-cosimazink/blob/main/PROJECT.md)
-- [Music APP Prototyp](https://mi-classroom.github.io/mi-web-technologien-beiboot-ss2026-cosimazink/app/)
+- Statisches Hosting via GitHub Pages: [Music APP Prototyp](https://mi-classroom.github.io/mi-web-technologien-beiboot-ss2026-cosimazink/app/)
 
 Browserbasierte Library, die Handgesten aus der Kamera per MediaPipe erkennt und als einfache Events bereitstellt, sowie eine darauf aufbauende Anwendung: ein gestengesteuertes Instrument (kontinuierlicher Ton per Fingerform + Kippen, oder Dur-/Moll-Akkorde per Fingeranzahl + Filter). Siehe [ADR 005](./adr/005-application.md) für die Begründung, warum diese Anwendung so gebaut wurde.
 
@@ -322,3 +322,14 @@ src/
       high.js
       index.js                    Fasst alle 6 zu REGISTERS zusammen
 ```
+
+## Hochschulkontext
+
+- Cosima Hiromi Zink
+- 1. Semester Medieninformatik Master
+- Modul: Web Technologien
+- Betreuung: [Christian Noss](https://github.com/cnoss)
+
+## Werkzeuge
+
+Claude wurde als Unterstützung bei der Entwicklung genutzt.

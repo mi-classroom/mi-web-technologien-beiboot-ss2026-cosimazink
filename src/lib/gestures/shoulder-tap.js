@@ -29,7 +29,7 @@ export class ShoulderTapGesture extends BaseGesture {
   detect(poseResults, ts) {
     if (!poseResults?.landmarks?.length) { this.reset(); return null; }
 
-    const { holdMs, visibilityMin, shoulderTapDist } = this._cfg;
+    const { holdMs, visibilityMin } = this._cfg;
     const lm = poseResults.landmarks[0];
 
     const leftVisible  = visible(lm, 15, visibilityMin) && visible(lm, 12, visibilityMin);
