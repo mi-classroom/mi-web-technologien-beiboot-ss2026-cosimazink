@@ -326,7 +326,7 @@ src/
 ## Hochschulkontext
 
 - Cosima Hiromi Zink
-- 1. Semester Medieninformatik Master
+- Semester 1 Medieninformatik Master
 - Modul: Web Technologien
 - Betreuung: [Christian Noss](https://github.com/cnoss)
 
