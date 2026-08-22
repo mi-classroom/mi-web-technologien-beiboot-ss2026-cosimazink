@@ -148,7 +148,7 @@ function predict() {
   }
 
   let poseResults = null;
-  try { poseResults = poseRecognizer.detectForVideo(video, ts); } catch (e) { /* ignore */ }
+  try { poseResults = poseRecognizer.detectForVideo(video, ts); } catch (_) { /* ignore */ }
 
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   renderResults(results);

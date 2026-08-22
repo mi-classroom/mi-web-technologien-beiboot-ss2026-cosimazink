@@ -2,10 +2,10 @@
 // Index must be extended to distinguish from PinkyPointerGesture (pinky only), preventing accidental clicks.
 // Internal cooldown prevents rapid re-firing. Use alongside PinkyPointerGesture.
 
-import { BaseGesture }            from "../gesture-base.js";
-import { dist2D, fingerExtended } from "../utils/utils.js";
-import { selectHands }            from "../utils/hands.js";
-import { remapToZone }            from "../utils/zones.js";
+import { BaseGesture }                        from "../gesture-base.js";
+import { fingerExtendedRadial, thumbExtended } from "../utils/utils.js";
+import { selectHands }                        from "../utils/hands.js";
+import { remapToZone }                        from "../utils/zones.js";
 
 const DEFAULTS = {
   confidenceMin:  0.7,
@@ -36,13 +36,13 @@ export class PinkyClickGesture extends BaseGesture {
       const lm = hands[label];
       if (!lm) continue;
 
-      const pinkyExtended = fingerExtended(lm, 20, 18);
-      const indexExtended = fingerExtended(lm, 8,  6);
-      const middleCurled  = !fingerExtended(lm, 12, 10);
-      const ringCurled    = !fingerExtended(lm, 16, 14);
-      const thumbExtended = dist2D(lm[4], lm[5]) > thumbExtendMin;
+      const pinkyExtended = fingerExtendedRadial(lm, 20, 18);
+      const indexExtended = fingerExtendedRadial(lm, 8,  6);
+      const middleCurled  = !fingerExtendedRadial(lm, 12, 10);
+      const ringCurled    = !fingerExtendedRadial(lm, 16, 14);
+      const isThumbExtended = thumbExtended(lm, thumbExtendMin);
 
-      if (!(pinkyExtended && indexExtended && middleCurled && ringCurled && thumbExtended)) continue;
+      if (!(pinkyExtended && indexExtended && middleCurled && ringCurled && isThumbExtended)) continue;
 
       const { x, y } = remapToZone(lm[20].x, lm[20].y, zoneX, zoneY);
 

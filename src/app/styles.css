@@ -1,22 +1,22 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
-  font-family: system-ui, sans-serif;
-  background: #fffefb;
-  color: #0f0e0e;
+  font-family: var(--font-family-base);
+  background: var(--color-bg);
+  color: var(--color-text);
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1rem;
-  padding: 2rem;
+  gap: var(--space-md);
+  padding: var(--space-lg);
   min-height: 100vh;
 }
 
-h1 { font-size: 4rem; font-weight: 700; color: #0f0e0e; }
-h2 { font-size: 1.5rem; font-weight: 700; color: #0f0e0e; }
+h1 { font-size: var(--font-size-xxl); font-weight: var(--font-weight-bold); color: var(--color-text); }
+h2 { font-size: var(--font-size-lg); font-weight: var(--font-weight-bold); color: var(--color-text); }
 p.hint {
-  font-size: 1rem;
-  color: #747474;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
   max-width: 30rem;
   text-align: left;
   min-height: 9.5rem; /* fest auf die Höhe der längeren Variante (Tones-Hinweis), damit der Moduswechsel nichts verschiebt */
@@ -26,35 +26,35 @@ p.hint {
   display: flex;
   flex-direction: row;
   align-items: flex-start;
-  gap: 2rem;
+  gap: var(--space-lg);
 }
 
 .info-panel {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 0.75rem;
+  gap: var(--space-sm);
   text-align: left;
-  width: 27rem; 
+  width: 27rem;
 }
 
-#mode-switch { display: flex; gap: 0.5rem; }
+#mode-switch { display: flex; gap: var(--space-xs); }
 #mode-switch button {
   font: inherit;
-  font-size: 1rem;
-  padding: 0.5rem 1rem;
-  margin-bottom: 1rem;
-  border: 1px solid #333;
-  border-radius: 4px;
-  background: #1a1a1a;
-  color: #989898;
+  font-size: var(--font-size-sm);
+  padding: var(--space-xs) var(--space-md);
+  margin-bottom: var(--space-md);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-text-inactive);
   cursor: pointer;
 }
 body[data-mode="tones"] #mode-tones,
 body[data-mode="chords"] #mode-chords {
-  background: rgb(126, 163, 238);
-  border-color: rgb(126, 163, 238);
-  color: #111;
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: var(--color-on-accent);
 }
 
 body[data-mode="tones"] .chords-only,
@@ -67,9 +67,9 @@ body[data-mode="chords"] .tones-only {
   width: 800px;
   max-width: 90vw;
   aspect-ratio: 4/3;
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   overflow: hidden;
-  background: #000;
+  background: var(--color-camera-bg);
 }
 #video, #canvas {
   position: absolute;
@@ -79,46 +79,48 @@ body[data-mode="chords"] .tones-only {
 }
 
 #register {
-  font-family: monospace;
-  font-size: 1.1rem;
-  color: rgb(126, 163, 238);
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-md);
+  color: var(--color-accent);
   min-height: 1.3rem; /* sonst kollabiert die Box auf 0, solange der Inhalt nur ein Leerzeichen ist */
 }
 #note {
-  font-family: monospace;
-  font-size: 2rem;
-  color: rgb(126, 163, 238);
-  min-height: 2.5rem;
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-xl);
+  color: var(--color-accent);
+  min-height: var(--size-hero-min-height);
 }
 #tone-state {
-  font-family: monospace;
-  font-size: 1rem;
-  font-weight: 600;
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-subtle);
 }
 #chord {
-  font-family: monospace;
-  font-size: 2rem;
-  color: rgb(126, 163, 238);
-  min-height: 2.5rem;
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-xl);
+  color: var(--color-accent);
+  min-height: var(--size-hero-min-height);
 }
 #filter-value {
-  font-family: monospace;
-  font-size: 1.1rem;
-  color: #747474;
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-md);
+  color: var(--color-text-muted);
 }
 #chord-state {
-  font-family: monospace;
-  font-size: 1rem;
-  font-weight: 600;
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-subtle);
 }
 #toggle-debug-canvas {
   font: inherit;
-  font-size: 0.75rem;
+  font-size: var(--font-size-xs);
   padding: 0.4rem 0.8rem;
-  border: 1px solid #b7b7b7;
-  border-radius: 4px;
-  background: #b7b7b7;
-  color: #0f0e0e;
+  border: 1px solid var(--color-surface-muted);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-muted);
+  color: var(--color-text);
   cursor: pointer;
 }
 #toggle-debug-canvas:disabled { opacity: 0.4; cursor: default; }
@@ -127,7 +129,7 @@ body[data-mode="chords"] .tones-only {
   display: none;
   width: 160px;
   aspect-ratio: 4/3;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   overflow: hidden;
 }
 #debug-canvas-wrapper.visible { display: block; }
@@ -138,27 +140,27 @@ body[data-mode="chords"] .tones-only {
   transform: scaleX(-1);
 }
 
-#status { font-family: monospace; font-size: 0.75rem; color: #999; }
+#status { font-family: var(--font-family-mono); font-size: var(--font-size-xs); color: var(--color-text-subtle); }
 #unlock-hint {
-  font-size: 1.5rem;
+  font-size: var(--font-size-lg);
   font-weight: 650;
-  color: rgb(126, 163, 238);
+  color: var(--color-accent);
 }
 #debug {
-  font-family: monospace;
-  font-size: 0.75rem;
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-xs);
   font-weight: 500;
-  color: rgb(126, 163, 238);
+  color: var(--color-accent);
   white-space: pre-wrap;
   text-align: left;
   width: 100%;
   height: 6em;
-  overflow-y: auto; 
+  overflow-y: auto;
 }
 
 .footer {
-  width: 100%;       /* oder ganz weglassen, hr ist standardmäßig schon 100% breit */
-  border: none;      /* Browser-Default-Rahmen entfernen */
-  border-top: 1px solid #ccc;
-  margin: 1rem 0;
+  width: 100%;
+  border: none;
+  border-top: 1px solid var(--color-border-subtle);
+  margin: var(--space-md) 0;
 }

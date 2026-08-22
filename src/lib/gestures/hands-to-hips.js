@@ -25,7 +25,7 @@ export class HandsToHipsGesture extends BaseGesture {
   detect(poseResults, ts) {
     if (!poseResults?.landmarks?.length) { this.reset(); return null; }
 
-    const { holdMs, visibilityMin, hipDist } = this._cfg;
+    const { holdMs, visibilityMin } = this._cfg;
     const lm = poseResults.landmarks[0];
 
     const bothVisible = visible(lm, 15, visibilityMin) && visible(lm, 16, visibilityMin)

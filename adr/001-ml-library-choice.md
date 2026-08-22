@@ -31,6 +31,19 @@ Gewählt wurde MediaPipe Gesture Recognizer. Die Library liefert 21 Hand-Landmar
 * 8 eingebaute Gesten, darüber hinausgehende Gesten erfordern eigenes Training
 * WASM-Bundle erhöht initiale Ladezeit
 
+## Architektur: Vanilla JS statt Framework
+
+Neben der ML-Library-Wahl fiel früh auch die Entscheidung, das gesamte Projekt (Library **und** Anwendung) in reinem Vanilla-JavaScript mit nativen ES-Modulen zu bauen, kein Framework (React, Vue, Svelte), kein Build-Tool (Vite, Webpack, esbuild), kein `package.json`.
+
+**Warum:**
+* **KISS-Prinzip konsequent zu Ende gedacht:** Die ML-Library-Wahl oben ist schon auf "kein Build-Schritt" optimiert, ein Framework/Bundler hätte genau diesen Vorteil wieder zunichtegemacht.
+* **Zielgruppe der Library:** Andere Teams sollen die Gesture-Library ohne Setup-Aufwand in ihr eigenes Projekt einbinden können, ein einzelner `<script type="module">`-Import, unabhängig vom eigenen Stack. Eine Framework-Bindung hätte das eingeschränkt.
+* **Umfang des Projekts:** Weder Routing noch komplexes State-Management oder Server-Rendering sind nötig, das rechtfertigt den Overhead eines Frameworks nicht (siehe auch die Reflexion zu Over-/Underengineering in [ADR 005](./005-application.md)).
+
+**Alternativen verworfen:**
+* **React/Vue/Svelte:** Hätte einen Build-Schritt erzwungen (JSX-/SFC-Kompilierung) für eine App, die im Kern nur DOM-Text aktualisiert und auf einen Canvas zeichnet.
+* **Vite/Webpack nur fürs Bundling, ohne Framework:** Hätte `npm install` und einen Build-Schritt vorausgesetzt, genau das, was die Library bewusst vermeidet, um reibungslos in Drittprojekte einbindbar zu bleiben.
+
 ## Pros and Cons of the Options
 
 ### MediaPipe Gesture Recognizer

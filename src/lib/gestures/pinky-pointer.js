@@ -3,9 +3,9 @@
 // Position is smoothed with a OneEuroFilter — the filter resets whenever the
 // gesture drops out so it snaps to the new spot instead of lagging behind.
 
-import { BaseGesture }    from "../gesture-base.js";
-import { fingerExtended } from "../utils/utils.js";
-import { selectHands }    from "../utils/hands.js";
+import { BaseGesture }         from "../gesture-base.js";
+import { fingerExtendedRadial } from "../utils/utils.js";
+import { selectHands }         from "../utils/hands.js";
 import { remapToZone }    from "../utils/zones.js";
 import { OneEuroFilter }  from "../utils/one-euro-filter.js";
 
@@ -35,10 +35,10 @@ export class PinkyPointerGesture extends BaseGesture {
       const lm = hands[label];
       if (!lm) continue;
 
-      const pinkyExtended = fingerExtended(lm, 20, 18);
-      const indexCurled   = !fingerExtended(lm, 8,  6);
-      const middleCurled  = !fingerExtended(lm, 12, 10);
-      const ringCurled    = !fingerExtended(lm, 16, 14);
+      const pinkyExtended = fingerExtendedRadial(lm, 20, 18);
+      const indexCurled   = !fingerExtendedRadial(lm, 8,  6);
+      const middleCurled  = !fingerExtendedRadial(lm, 12, 10);
+      const ringCurled    = !fingerExtendedRadial(lm, 16, 14);
 
       if (!(pinkyExtended && indexCurled && middleCurled && ringCurled)) continue;
 

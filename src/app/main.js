@@ -134,7 +134,6 @@ function updateToneAudible() {
   const audible = activeRegisters.size > 0;
   setToneAudible(audible);
   toneStateEl.textContent = audible ? "Sound on" : "Sound off";
-  toneStateEl.style.color = audible ? "#999" : "#999";
 }
 
 for (const reg of REGISTERS) {
@@ -171,7 +170,6 @@ function updateChordAudible() {
   const audible = chordHandActive;
   setChordAudible(audible);
   chordStateEl.textContent = audible ? "Sound on" : "Sound off";
-  chordStateEl.style.color = audible ? "#999" : "#999";
 }
 
 chordLib.on("chord-hand", ({ count }) => {
@@ -220,7 +218,7 @@ modeChordsBtn.addEventListener("click", () => setMode("chords"));
     const activeLib = mode === "tones" ? toneLib : chordLib;
     activeLib.detect(input, ts);
     drawHands(input.handResults);
-    updateDebug(input.handResults, ts);
+    updateDebug(input.handResults);
   });
   await source.start(video);
 
@@ -246,7 +244,7 @@ debugCanvasToggle.addEventListener("click", () => {
 
 // Live debug readout of which fingers are extended and the angle of the hand,
 // for each hand 
-function updateDebug(handResults, ts) {
+function updateDebug(handResults) {
   const hands = selectHands(handResults, 0.7);
   const lines = [];
   for (const label of ["Left", "Right"]) {
