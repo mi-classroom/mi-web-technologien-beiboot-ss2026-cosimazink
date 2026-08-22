@@ -15,6 +15,30 @@ body {
 h1 { font-size: 1rem; font-weight: 600; color: #f90; }
 p.hint { font-size: 0.8rem; color: #999; text-align: center; max-width: 30rem; }
 
+#mode-switch { display: flex; gap: 0.5rem; }
+#mode-switch button {
+  font: inherit;
+  font-size: 0.85rem;
+  padding: 0.5rem 1rem;
+  border: 1px solid #333;
+  border-radius: 4px;
+  background: #1a1a1a;
+  color: #999;
+  cursor: pointer;
+}
+body[data-mode="tones"] #mode-tones,
+body[data-mode="chords"] #mode-chords {
+  background: #f90;
+  border-color: #f90;
+  color: #111;
+}
+
+/* Nur die Elemente des aktiven Modus anzeigen */
+body[data-mode="tones"] .chords-only,
+body[data-mode="chords"] .tones-only {
+  display: none;
+}
+
 #camera {
   position: relative;
   width: 480px;
@@ -44,6 +68,22 @@ p.hint { font-size: 0.8rem; color: #999; text-align: center; max-width: 30rem; }
   min-height: 2.5rem;
 }
 #tone-state {
+  font-family: monospace;
+  font-size: 1rem;
+  font-weight: 600;
+}
+#chord {
+  font-family: monospace;
+  font-size: 2rem;
+  color: #f90;
+  min-height: 2.5rem;
+}
+#filter-value {
+  font-family: monospace;
+  font-size: 1.1rem;
+  color: #f90;
+}
+#chord-state {
   font-family: monospace;
   font-size: 1rem;
   font-weight: 600;
